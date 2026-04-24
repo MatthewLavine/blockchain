@@ -1,15 +1,18 @@
 import { Block } from './Block';
+import { Transaction } from './Transaction';
 
 export class Blockchain {
   public chain: Block[];
   public difficulty: number;
+  public pendingTransactions: Transaction[];
+  public miningReward: number;
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
     this.chain = [this.createGenesisBlock()];
-    // The 'difficulty' determines how many leading zeros the hash must have.
-    // Higher number = much harder to mine.
     this.difficulty = 4;
+    this.pendingTransactions = [];
+    this.miningReward = 100; // Reward the miner with 100 coins
   }
 
   /**
@@ -17,8 +20,7 @@ export class Blockchain {
    * This is called the "Genesis Block". We have to create it manually.
    */
   private createGenesisBlock(): Block {
-    // We can hardcode the date, the data, and set the previous hash to "0"
-    return new Block(Date.parse("2026-01-01"), "Genesis Block", "0");
+    return new Block(Date.parse("2026-01-01"), [], "0");
   }
 
   /**
@@ -29,23 +31,60 @@ export class Blockchain {
   }
 
   /**
-   * Adds a new block to the chain.
-   * Crucially, it links the new block to the previous one before adding it.
+   * Takes all pending transactions, puts them in a Block, and mines it.
+   * @param miningRewardAddress The wallet address to send the mining reward to.
    */
-  public addBlock(newBlock: Block): void {
-    // 1. Point the new block to the current latest block in the chain
-    newBlock.previousHash = this.getLatestBlock().hash;
+  public minePendingTransactions(miningRewardAddress: string): void {
+    // In a real blockchain like Bitcoin, a block has a max size and miners choose which
+    // transactions to include. For this tutorial, we just include all pending transactions.
+    const block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
     
-    // 2. We MUST mine the block (Proof of Work) before we are allowed to add it to the chain
-    newBlock.mineBlock(this.difficulty);
-    
-    // 3. Add the block to our array
-    this.chain.push(newBlock);
+    // Mine the block
+    block.mineBlock(this.difficulty);
+
+    console.log('Block successfully mined!');
+    this.chain.push(block);
+
+    // Reset the pending transactions array and add the mining reward for the NEXT block
+    // Notice that the 'fromAddress' is null because the system is creating these coins out of thin air!
+    this.pendingTransactions = [
+      new Transaction(null, miningRewardAddress, this.miningReward)
+    ];
+  }
+
+  /**
+   * Adds a new transaction to the pool of pending transactions.
+   */
+  public createTransaction(transaction: Transaction): void {
+    this.pendingTransactions.push(transaction);
+  }
+
+  /**
+   * Calculates the balance of a given wallet address by looping through the entire blockchain
+   * and looking for transactions sent to or from this address.
+   */
+  public getBalanceOfAddress(address: string): number {
+    let balance = 0;
+
+    for (const block of this.chain) {
+      for (const trans of block.transactions) {
+        // If money is sent FROM the address, decrease balance
+        if (trans.fromAddress === address) {
+          balance -= trans.amount;
+        }
+
+        // If money is sent TO the address, increase balance
+        if (trans.toAddress === address) {
+          balance += trans.amount;
+        }
+      }
+    }
+
+    return balance;
   }
 
   /**
    * Loops through the entire chain to verify its integrity.
-   * Returns true if the chain is valid, false if it has been tampered with.
    */
   public isChainValid(): boolean {
     // We start at 1 because block 0 is the Genesis block (it has no previous block to check)

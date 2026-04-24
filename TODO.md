@@ -12,11 +12,11 @@
 - [x] Introduce a `difficulty` level to the blockchain.
 - [x] Modify block creation so it requires "mining" (finding a hash that starts with a certain number of zeros).
 
-## Phase 3: Transactions & Rewards
-- [ ] Create a `Transaction` class (Sender, Recipient, Amount).
-- [ ] Manage a pool of pending transactions.
-- [ ] Introduce mining rewards (giving coins to the node that mines the block).
-- [ ] Calculate a user's wallet balance by iterating through the blockchain history.
+## Phase 3: Transactions & Rewards (Completed)
+- [x] Create a `Transaction` class (Sender, Recipient, Amount).
+- [x] Manage a pool of pending transactions.
+- [x] Introduce mining rewards (giving coins to the node that mines the block).
+- [x] Calculate a user's wallet balance by iterating through the blockchain history.
 
 ## Phase 4: Wallets & Security (Digital Signatures)
 - [ ] Generate Public and Private key pairs (using Elliptic Curve Cryptography like RSA or secp256k1).

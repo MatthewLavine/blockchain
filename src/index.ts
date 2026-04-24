@@ -1,19 +1,28 @@
 import { Blockchain } from './Blockchain';
-import { Block } from './Block';
+import { Transaction } from './Transaction';
 
-// 1. Initialize a new cryptocurrency
 let myCoin = new Blockchain();
 
-// 2. Add some new blocks (transactions)
-console.log('Mining block 1...');
-myCoin.addBlock(new Block(Date.now(), { amount: 4 }));
+console.log('Creating some transactions...');
+myCoin.createTransaction(new Transaction('address1', 'address2', 100));
+myCoin.createTransaction(new Transaction('address2', 'address1', 50));
 
-console.log('Mining block 2...');
-myCoin.addBlock(new Block(Date.now(), { amount: 10 }));
+console.log('\nStarting the miner...');
+// The miner gets the reward sent to 'my-wallet-address'
+myCoin.minePendingTransactions('my-wallet-address');
 
-// 3. Print the whole blockchain to the console
-console.log('\n--- Entire Blockchain ---');
-console.log(JSON.stringify(myCoin, null, 2));
+// The miner's balance will be 0 right now, because the reward is put into the PENDING transactions for the next block!
+console.log('\nBalance of my-wallet-address is', myCoin.getBalanceOfAddress('my-wallet-address'));
+
+console.log('\nStarting the miner again...');
+myCoin.minePendingTransactions('my-wallet-address');
+
+// NOW the miner has their 100 coins from the first block they mined.
+console.log('\nBalance of my-wallet-address is', myCoin.getBalanceOfAddress('my-wallet-address'));
+
+// Check balances of other addresses
+console.log('\nBalance of address1 is', myCoin.getBalanceOfAddress('address1'));
+console.log('Balance of address2 is', myCoin.getBalanceOfAddress('address2'));
 
 // 4. Test Chain Validation
 console.log('\nIs blockchain valid?', myCoin.isChainValid());

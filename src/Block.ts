@@ -1,15 +1,16 @@
 import * as crypto from 'crypto';
+import { Transaction } from './Transaction';
 
 export class Block {
   public timestamp: number;
-  public data: any;
+  public transactions: Transaction[];
   public previousHash: string;
   public hash: string;
   public nonce: number;
 
-  constructor(timestamp: number, data: any, previousHash: string = '') {
+  constructor(timestamp: number, transactions: Transaction[], previousHash: string = '') {
     this.timestamp = timestamp;
-    this.data = data;
+    this.transactions = transactions;
     this.previousHash = previousHash;
     this.nonce = 0;
     // We calculate the hash based on the initial properties of the block
@@ -21,7 +22,7 @@ export class Block {
    * The hash acts like a unique digital fingerprint for the block's data.
    */
   public calculateHash(): string {
-    const dataToHash = this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce;
+    const dataToHash = this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce;
     
     return crypto
       .createHash('sha256')
