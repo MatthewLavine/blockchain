@@ -2,10 +2,14 @@ import { Block } from './Block';
 
 export class Blockchain {
   public chain: Block[];
+  public difficulty: number;
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
     this.chain = [this.createGenesisBlock()];
+    // The 'difficulty' determines how many leading zeros the hash must have.
+    // Higher number = much harder to mine.
+    this.difficulty = 4;
   }
 
   /**
@@ -32,9 +36,8 @@ export class Blockchain {
     // 1. Point the new block to the current latest block in the chain
     newBlock.previousHash = this.getLatestBlock().hash;
     
-    // 2. Because the properties of `newBlock` changed (we just changed its previousHash),
-    // we MUST recalculate its hash. Otherwise, its hash would be invalid.
-    newBlock.hash = newBlock.calculateHash();
+    // 2. We MUST mine the block (Proof of Work) before we are allowed to add it to the chain
+    newBlock.mineBlock(this.difficulty);
     
     // 3. Add the block to our array
     this.chain.push(newBlock);

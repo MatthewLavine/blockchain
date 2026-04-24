@@ -7,10 +7,10 @@
 - [x] Build the hashing mechanism (SHA-256) to secure the blocks.
 - [x] Implement checking the integrity/validity of the chain.
 
-## Phase 2: Proof of Work (Mining)
-- [ ] Implement a "Proof of Work" algorithm.
-- [ ] Introduce a `difficulty` level to the blockchain.
-- [ ] Modify block creation so it requires "mining" (finding a hash that starts with a certain number of zeros).
+## Phase 2: Proof of Work (Mining) (Completed)
+- [x] Implement a "Proof of Work" algorithm.
+- [x] Introduce a `difficulty` level to the blockchain.
+- [x] Modify block creation so it requires "mining" (finding a hash that starts with a certain number of zeros).
 
 ## Phase 3: Transactions & Rewards
 - [ ] Create a `Transaction` class (Sender, Recipient, Amount).
