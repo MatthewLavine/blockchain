@@ -39,4 +39,31 @@ export class Blockchain {
     // 3. Add the block to our array
     this.chain.push(newBlock);
   }
+
+  /**
+   * Loops through the entire chain to verify its integrity.
+   * Returns true if the chain is valid, false if it has been tampered with.
+   */
+  public isChainValid(): boolean {
+    // We start at 1 because block 0 is the Genesis block (it has no previous block to check)
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
+
+      // 1. Check if the current block's hash is still mathematically correct
+      // This detects if someone altered the 'data' or 'timestamp' of the current block
+      if (currentBlock.hash !== currentBlock.calculateHash()) {
+        return false;
+      }
+
+      // 2. Check if the current block correctly points to the previous block's hash
+      // This detects if someone tried to insert a fake block or swap blocks around
+      if (currentBlock.previousHash !== previousBlock.hash) {
+        return false;
+      }
+    }
+
+    // If we make it through the whole loop without returning false, the chain is perfectly valid!
+    return true;
+  }
 }
