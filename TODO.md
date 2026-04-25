@@ -23,7 +23,21 @@
 - [x] Sign transactions with a private key.
 - [x] Verify transaction signatures before adding them to a block.
 
-## Phase 5: Networking (The Decentralized Part) - *Optional Advanced Step*
-- [ ] Build a simple HTTP API (e.g., using Express.js) to interact with our node.
-- [ ] Connect multiple nodes together (P2P).
-- [ ] Implement a consensus algorithm to resolve conflicts when nodes disagree on the chain.
+## Phase 5: Polishing the Core Logic
+- [ ] Prevent negative balances (ensure sender has enough funds before accepting a transaction).
+- [ ] Ensure mining rewards don't artificially inflate the system too easily (e.g., halving the reward over time, or hardcoding max supply).
+- [ ] Add basic transaction validation (e.g., amount must be > 0).
+
+## Phase 6: Networking & HTTP API (The Decentralized Part)
+- [ ] Initialize an Express.js server to run our node.
+- [ ] Create `GET /blocks` endpoint to view the blockchain.
+- [ ] Create `POST /transaction` endpoint to submit a new signed transaction.
+- [ ] Create `GET /mine` endpoint to trigger the mining process.
+- [ ] *(Advanced)* Connect multiple nodes together via WebSockets or HTTP to synchronize the chain (P2P).
+
+## Phase 7: Visual Web Interface (Front-end Dashboard)
+- [ ] Initialize a new modern web application (e.g., using Vite + React or Vanilla JS/CSS).
+- [ ] Create a "Blockchain Explorer" view to visually render the blocks and their hashes.
+- [ ] Create a "Wallet" interface to display balance and public key.
+- [ ] Create a "Send Transaction" form that handles cryptographic signing in the browser.
+- [ ] Implement beautiful, premium aesthetics with dark mode, micro-animations, and smooth gradients.
