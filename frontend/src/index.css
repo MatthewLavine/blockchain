@@ -12,6 +12,7 @@
   --text-secondary: #94a3b8;
   --body-gradient: radial-gradient(circle at top right, #1e1b4b, #0a0b10 40%);
   --table-header-bg: rgba(20, 22, 32, 0.8);
+  --modal-overlay: rgba(0, 0, 0, 0.7);
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -35,6 +36,7 @@
   --text-secondary: #64748b;
   --body-gradient: radial-gradient(circle at top right, #e0e7ff, #f8fafc 40%);
   --table-header-bg: rgba(255, 255, 255, 0.8);
+  --modal-overlay: rgba(255, 255, 255, 0.6);
 }
 
 * {

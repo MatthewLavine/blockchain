@@ -7,10 +7,13 @@ import { TransactionForm } from './components/TransactionForm';
 import { MiningCard } from './components/MiningCard';
 import { BlockExplorer } from './components/BlockExplorer';
 import { Mempool } from './components/Mempool';
+import { BlockModal } from './components/BlockModal';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Block } from './hooks/useBlockchain';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const {
     walletAddress,
     balance,
@@ -72,7 +75,7 @@ function App() {
 
         {/* Column 2: Blockchain Ledger */}
         <section>
-          <BlockExplorer blocks={blocks} />
+          <BlockExplorer blocks={blocks} onBlockClick={setSelectedBlock} />
         </section>
 
         {/* Column 3: Network Feeds */}
@@ -81,6 +84,8 @@ function App() {
           <ActivityList blocks={blocks} walletAddress={walletAddress} />
         </section>
       </div>
+
+      <BlockModal block={selectedBlock} onClose={() => setSelectedBlock(null)} />
     </div>
   );
 }

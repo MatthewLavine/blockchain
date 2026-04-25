@@ -4,9 +4,10 @@ import { Block } from '../hooks/useBlockchain';
 
 interface BlockExplorerProps {
   blocks: Block[];
+  onBlockClick: (block: Block) => void;
 }
 
-export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks }) => {
+export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks, onBlockClick }) => {
   return (
     <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexShrink: 0 }}>
@@ -37,7 +38,12 @@ export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks }) => {
           </thead>
           <tbody>
             {blocks.map((block, index) => (
-              <tr key={block.hash} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} className="table-row-hover">
+              <tr 
+                key={block.hash} 
+                onClick={() => onBlockClick(block)}
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s', cursor: 'pointer' }} 
+                className="table-row-hover"
+              >
                 <td style={{ padding: '10px 8px', fontWeight: 600, color: 'var(--accent-primary)' }}>
                   #{blocks.length - index - 1}
                 </td>
