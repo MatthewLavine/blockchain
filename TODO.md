@@ -57,7 +57,13 @@
 - [x] Ensure the P2P layer handles disk-loaded chains correctly during sync.
 - [x] Implement **Global Reset Propagation** to synchronize state purges across the network.
 
-## Phase 10: Network Evolution (Next Up!)
+## Phase 10: Code Refactoring & Type Safety (Current)
+- [ ] **Unified Serialization**: Implement static `.fromJSON()` factories for `Block` and `Transaction` classes.
+- [ ] **P2P Message Handlers**: Decompose the massive `handleMessage` switch into discrete, named handler methods.
+- [ ] **Type Enforcement**: Define TypeScript interfaces for all P2P message payloads (removing `any`).
+- [ ] **Context-Aware Logger**: Create a utility to prefix logs with node identity (e.g. `[Node 3000]`).
+
+## Phase 11: Network Evolution
 - [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
 - [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
 - [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
