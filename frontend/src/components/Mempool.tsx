@@ -4,9 +4,10 @@ import { Transaction } from '../hooks/useBlockchain';
 
 interface MempoolProps {
   transactions: Transaction[];
+  onTransactionClick: (tx: Transaction) => void;
 }
 
-export const Mempool: React.FC<MempoolProps> = ({ transactions }) => {
+export const Mempool: React.FC<MempoolProps> = ({ transactions, onTransactionClick }) => {
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -35,15 +36,20 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions }) => {
           </p>
         ) : (
           transactions.map((tx, i) => (
-            <div key={i} style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              gap: '6px', 
-              padding: '10px', 
-              background: 'rgba(99, 102, 241, 0.05)', 
-              borderRadius: '10px', 
-              border: '1px solid rgba(99, 102, 241, 0.2)' 
-            }}>
+            <div 
+              key={i} 
+              onClick={() => onTransactionClick(tx)}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '6px', 
+                padding: '10px', 
+                background: 'rgba(99, 102, 241, 0.05)', 
+                borderRadius: '10px', 
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                cursor: 'pointer'
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   <Send size={14} />

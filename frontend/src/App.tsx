@@ -8,12 +8,14 @@ import { MiningCard } from './components/MiningCard';
 import { BlockExplorer } from './components/BlockExplorer';
 import { Mempool } from './components/Mempool';
 import { BlockModal } from './components/BlockModal';
+import { TransactionModal } from './components/TransactionModal';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Block } from './hooks/useBlockchain';
+import { Block, Transaction } from './hooks/useBlockchain';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const {
     walletAddress,
     balance,
@@ -80,12 +82,13 @@ function App() {
 
         {/* Column 3: Network Feeds */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
-          <Mempool transactions={pendingTransactions} />
-          <ActivityList blocks={blocks} walletAddress={walletAddress} />
+          <Mempool transactions={pendingTransactions} onTransactionClick={setSelectedTransaction} />
+          <ActivityList blocks={blocks} walletAddress={walletAddress} onTransactionClick={setSelectedTransaction} />
         </section>
       </div>
 
       <BlockModal block={selectedBlock} onClose={() => setSelectedBlock(null)} />
+      <TransactionModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
     </div>
   );
 }

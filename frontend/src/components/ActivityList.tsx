@@ -5,9 +5,10 @@ import { Block } from '../hooks/useBlockchain';
 interface ActivityListProps {
   blocks: Block[];
   walletAddress: string;
+  onTransactionClick: (tx: any) => void;
 }
 
-export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddress }) => {
+export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddress, onTransactionClick }) => {
   const transactions = blocks
     .flatMap(b => b.transactions)
     .filter(tx => tx.fromAddress === walletAddress || tx.toAddress === walletAddress);
@@ -29,15 +30,20 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
             const isSent = tx.fromAddress === walletAddress;
             const isMiningReward = tx.fromAddress === null;
             return (
-              <div key={i} style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: '6px', 
-                padding: '10px', 
-                background: 'rgba(0,0,0,0.1)', 
-                borderRadius: '10px', 
-                border: '1px solid var(--glass-border)' 
-              }}>
+              <div 
+                key={i} 
+                onClick={() => onTransactionClick(tx)}
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  gap: '6px', 
+                  padding: '10px', 
+                  background: 'rgba(0,0,0,0.1)', 
+                  borderRadius: '10px', 
+                  border: '1px solid var(--glass-border)',
+                  cursor: 'pointer'
+                }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ 
