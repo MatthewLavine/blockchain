@@ -1,22 +1,29 @@
 import { Block } from './Block';
 import { Transaction } from './Transaction';
 import { Logger } from './Logger';
+import { Mempool } from './Mempool';
+import { ChainValidator } from './ChainValidator';
+import { NETWORK_CONSTANTS } from './Constants';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export class Blockchain {
   public chain: Block[];
   public difficulty: number;
-  public pendingTransactions: Transaction[];
+  private mempool: Mempool;
   public miningReward: number;
   private storagePath: string | null = null;
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
     this.chain = [this.createGenesisBlock()];
-    this.difficulty = 4;
-    this.pendingTransactions = [];
-    this.miningReward = 100; // Reward the miner with 100 coins
+    this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
+    this.mempool = new Mempool();
+    this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
+  }
+
+  public get pendingTransactions(): Transaction[] {
+    return this.mempool.getTransactions();
   }
 
   public setStoragePath(id: string | number): void {
@@ -46,9 +53,9 @@ export class Blockchain {
       // Hydrate chain and transactions using factory methods
       this.chain = data.chain.map((block: any) => Block.fromObject(block));
 
-      this.pendingTransactions = data.pendingTransactions.map((tx: any) =>
+      this.mempool.setTransactions(data.pendingTransactions.map((tx: any) =>
         Transaction.fromObject(tx)
-      );
+      ));
 
       this.miningReward = data.miningReward;
 
@@ -56,7 +63,7 @@ export class Blockchain {
       if (!this.isChainValid()) {
         Logger.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
         this.chain = [this.createGenesisBlock()];
-        this.pendingTransactions = [];
+        this.mempool.clear();
         this.saveToDisk(); // Overwrite the corrupt file with a fresh start
       } else {
         Logger.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
@@ -72,7 +79,7 @@ export class Blockchain {
    */
   public reset(): void {
     this.chain = [this.createGenesisBlock()];
-    this.pendingTransactions = [];
+    this.mempool.clear();
     this.saveToDisk();
   }
 
@@ -81,7 +88,12 @@ export class Blockchain {
    * This is called the "Genesis Block". We have to create it manually.
    */
   private createGenesisBlock(): Block {
-    return new Block(0, Date.parse("2026-01-01"), [], "0");
+    return new Block(
+      0,
+      Date.parse(NETWORK_CONSTANTS.GENESIS_DATE),
+      [],
+      NETWORK_CONSTANTS.GENESIS_PREVIOUS_HASH
+    );
   }
 
   /**
@@ -96,19 +108,19 @@ export class Blockchain {
    * @param miningRewardAddress The wallet address to send the mining reward to.
    */
   public minePendingTransactions(miningRewardAddress: string): void {
-    const block = new Block(this.chain.length, Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
+    const block = new Block(this.chain.length, Date.now(), this.mempool.getTransactions(), this.getLatestBlock().hash);
 
     block.mineBlock(this.difficulty);
     Logger.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
     this.addBlock(block);
 
     // Reset pending transactions with the mining reward
-    this.pendingTransactions = [
+    this.mempool.setTransactions([
       new Transaction(null, miningRewardAddress, this.miningReward)
-    ];
+    ]);
 
-    // Halving mechanism: Every 100 blocks, the mining reward is cut in half
-    if (this.chain.length % 100 === 0) {
+    // Halving mechanism: Every HALVING_INTERVAL blocks, the mining reward is cut in half
+    if (this.chain.length % NETWORK_CONSTANTS.HALVING_INTERVAL === 0) {
       this.miningReward = this.miningReward / 2;
     }
   }
@@ -139,7 +151,7 @@ export class Blockchain {
     // Prevent sending more than the wallet has!
     // We must calculate the balance based on the mined chain PLUS the pending transactions they've already submitted.
     let currentBalance = this.getBalanceOfAddress(transaction.fromAddress);
-    for (const pendingTx of this.pendingTransactions) {
+    for (const pendingTx of this.mempool.getTransactions()) {
       if (pendingTx.fromAddress === transaction.fromAddress) {
         currentBalance -= pendingTx.amount;
       }
@@ -149,7 +161,7 @@ export class Blockchain {
       throw new Error('Not enough balance to complete this transaction');
     }
 
-    this.pendingTransactions.push(transaction);
+    this.mempool.addTransaction(transaction);
     this.saveToDisk();
   }
 
@@ -181,33 +193,7 @@ export class Blockchain {
    * Loops through the entire chain to verify its integrity.
    */
   public isChainValid(): boolean {
-    // We start at 1 because block 0 is the Genesis block (it has no previous block to check)
-    for (let i = 1; i < this.chain.length; i++) {
-      const currentBlock = this.chain[i];
-      const previousBlock = this.chain[i - 1];
-
-      // 1. Verify all transactions inside the current block
-      for (const tx of currentBlock.transactions) {
-        if (!tx.isValid()) {
-          return false; // A fake transaction was found!
-        }
-      }
-
-      // 1. Check if the current block's hash is still mathematically correct
-      // This detects if someone altered the 'data' or 'timestamp' of the current block
-      if (currentBlock.hash !== currentBlock.calculateHash()) {
-        return false;
-      }
-
-      // 2. Check if the current block correctly points to the previous block's hash
-      // This detects if someone tried to insert a fake block or swap blocks around
-      if (currentBlock.previousHash !== previousBlock.hash) {
-        return false;
-      }
-    }
-
-    // If we make it through the whole loop without returning false, the chain is perfectly valid!
-    return true;
+    return ChainValidator.isChainValid(this.chain, this.createGenesisBlock());
   }
   /**
    * Replaces the current chain with a new one, provided the new chain is longer and valid.
@@ -223,7 +209,7 @@ export class Blockchain {
     const hydratedChain = newChain.map(obj => obj instanceof Block ? obj : Block.fromObject(obj));
 
     // Verify the new chain is valid before accepting it
-    if (!this.isValidChain(hydratedChain)) {
+    if (!ChainValidator.isChainValid(hydratedChain, this.createGenesisBlock())) {
       Logger.log('Received chain is invalid. Ignoring.');
       return false;
     }
@@ -231,33 +217,6 @@ export class Blockchain {
     Logger.log('Replacing blockchain with the longer chain from peer.');
     this.chain = hydratedChain;
     this.saveToDisk();
-    return true;
-  }
-
-  /**
-   * Helper to validate a specific chain (not necessarily the local one)
-   */
-  private isValidChain(chainToValidate: Block[]): boolean {
-    // Check genesis block
-    if (JSON.stringify(chainToValidate[0]) !== JSON.stringify(this.createGenesisBlock())) {
-      return false;
-    }
-
-    for (let i = 1; i < chainToValidate.length; i++) {
-      const currentBlock = chainToValidate[i];
-      const previousBlock = chainToValidate[i - 1];
-
-      // Validate hashes
-      if (currentBlock.previousHash !== previousBlock.hash) {
-        return false;
-      }
-
-      // Re-calculate hash to ensure it hasn't been tampered with
-      // (This requires us to know how the hash is calculated in the Block class)
-      // Since Block.hash is already calculated and stored, we just trust the cryptographic link
-      // But a real implementation would re-calculate it here.
-    }
-
     return true;
   }
 }
