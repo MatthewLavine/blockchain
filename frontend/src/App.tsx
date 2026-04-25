@@ -60,7 +60,10 @@ function App() {
   // 2. Fetch Data
   const fetchData = useCallback(async (silent = false) => {
     if (!walletAddress) return;
+    
+    const startTime = Date.now();
     if (!silent) setIsLoading(true);
+    
     try {
       const [blocksRes, balanceRes] = await Promise.all([
         axios.get(`${API_BASE}/blocks`),
@@ -72,7 +75,12 @@ function App() {
     } catch (err) {
       if (!silent) setError('Failed to connect to the blockchain node.');
     } finally {
-      if (!silent) setIsLoading(false);
+      // If not silent, ensure the loading animation is visible for at least 600ms
+      if (!silent) {
+        const elapsedTime = Date.now() - startTime;
+        const waitTime = Math.max(0, 600 - elapsedTime);
+        setTimeout(() => setIsLoading(false), waitTime);
+      }
     }
   }, [walletAddress]);
 
