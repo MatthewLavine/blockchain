@@ -7,6 +7,7 @@ export class Transaction {
   public fromAddress: string | null;
   public toAddress: string;
   public amount: number;
+  public timestamp: number;
   public signature: string;
 
   /**
@@ -18,6 +19,7 @@ export class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
+    this.timestamp = Date.now();
     this.signature = ''; // Will be populated when the transaction is signed
   }
 
@@ -84,6 +86,7 @@ export class Transaction {
    */
   static fromObject(obj: Record<string, any>): Transaction {
     const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount);
+    tx.timestamp = obj.timestamp ?? Date.now();
     tx.signature = obj.signature;
     return tx;
   }

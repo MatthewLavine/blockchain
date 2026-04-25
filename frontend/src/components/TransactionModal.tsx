@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Send, ArrowRight, ShieldCheck, Fingerprint, Coins } from 'lucide-react';
+import { X, Send, ArrowRight, ShieldCheck, Fingerprint, Coins, Clock } from 'lucide-react';
 import { Transaction } from '../hooks/useBlockchain';
 
 interface TransactionModalProps {
@@ -43,8 +43,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction,
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Transaction Details</h2>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Verifying cryptographic proof...
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={11} />
+                {transaction.timestamp
+                  ? new Date(transaction.timestamp).toLocaleString()
+                  : 'Timestamp unavailable'}
               </span>
             </div>
           </div>
