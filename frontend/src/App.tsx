@@ -58,9 +58,9 @@ function App() {
   }, []);
 
   // 2. Fetch Data
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (silent = false) => {
     if (!walletAddress) return;
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     try {
       const [blocksRes, balanceRes] = await Promise.all([
         axios.get(`${API_BASE}/blocks`),
@@ -70,14 +70,21 @@ function App() {
       setBalance(balanceRes.data.balance);
       setError('');
     } catch (err) {
-      setError('Failed to connect to the blockchain node.');
+      if (!silent) setError('Failed to connect to the blockchain node.');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [walletAddress]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(); // Initial load (not silent)
+
+    // Set up polling every 3 seconds to keep tabs in sync
+    const interval = setInterval(() => {
+      fetchData(true); // Silent update
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   // 3. Handle Send Transaction
