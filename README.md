@@ -58,6 +58,25 @@ npm run dev
 
 The dashboard will be available at `http://localhost:5173`.
 
+### 4. Running with Docker (Recommended)
+You can spin up the entire blockchain stack (frontend + 5 nodes) using Docker Compose:
+
+```bash
+# Start all services
+docker compose up
+
+# Run in background
+docker compose up -d
+
+# See logs
+docker compose logs -f
+
+# Check health status of nodes
+docker compose ps
+```
+
+The dashboard will be available at `http://localhost:8080`.
+
 ## 📜 Blockchain Rules
 - **Genesis Block**: The chain starts with a special hardcoded block.
 - **Mining Rewards**: Miners receive coins for securing the network.
