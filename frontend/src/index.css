@@ -41,8 +41,14 @@
   box-sizing: border-box;
 }
 
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
-  min-height: 100vh;
   background: var(--body-gradient);
   background-attachment: fixed;
   transition: all 0.3s ease;

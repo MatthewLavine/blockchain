@@ -13,15 +13,15 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
     .filter(tx => tx.fromAddress === walletAddress || tx.toAddress === walletAddress);
 
   return (
-    <div className="glass-card" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
-          <History size={24} />
+    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexShrink: 0 }}>
+        <div style={{ padding: '8px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}>
+          <History size={20} />
         </div>
-        <h2 style={{ fontSize: '1.25rem' }}>Recent Activity</h2>
+        <h2 style={{ fontSize: '1.1rem' }}>Activity</h2>
       </div>
 
-      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         {transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No transactions found for this wallet.</p>
         ) : (
