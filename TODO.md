@@ -33,11 +33,30 @@
 - [x] Create `GET /blocks` endpoint to view the blockchain.
 - [x] Create `POST /transaction` endpoint to submit a new signed transaction.
 - [x] Create `GET /mine` endpoint to trigger the mining process.
-- [ ] *(Advanced)* Connect multiple nodes together via WebSockets or HTTP to synchronize the chain (P2P).
+- [x] Implement Peer-to-Peer (P2P) synchronization via WebSockets.
+- [x] Implement the "Longest Chain Rule" for decentralized consensus.
 
 ## Phase 7: Visual Web Interface (Front-end Dashboard) (Completed)
-- [x] Initialize a new modern web application (e.g., using Vite + React or Vanilla JS/CSS).
+- [x] Initialize a new modern React + Vite application.
 - [x] Create a "Blockchain Explorer" view to render the blocks and their hashes.
 - [x] Create a "Wallet" interface to display balance and public key.
 - [x] Create a "Send Transaction" form that handles cryptographic signing in the browser.
-- [x] Implement beautiful, premium aesthetics with dark mode, micro-animations, and smooth gradients.
+- [x] Implement beautiful, premium aesthetics with dark mode and micro-animations.
+- [x] Add interactive detail modals for blocks and transactions.
+
+## Phase 8: Advanced Networking (Gossip & Orchestration) (Completed)
+- [x] Implement a **Gossip Protocol** for automatic peer discovery.
+- [x] Add self-announcement and socket deduplication for a clean network mesh.
+- [x] Build a "Network Map" UI to visualize connected peers.
+- [x] Create automation scripts (`.ps1` and `.sh`) to launch multi-node local networks.
+- [x] Implement a "Seed Node" mechanism for self-healing connections.
+
+## Phase 9: Persistence (Database) (Next Up!)
+- [ ] Implement a storage layer to save the blockchain to disk (e.g., `chain.json` or LevelDB).
+- [ ] Load the existing chain from disk on startup instead of starting from Genesis.
+- [ ] Ensure the P2P layer handles disk-loaded chains correctly during sync.
+
+## Phase 10: Network Evolution
+- [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
+- [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
+- [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
