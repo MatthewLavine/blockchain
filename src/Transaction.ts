@@ -1,16 +1,75 @@
+import * as crypto from 'crypto';
+import { ec as EC } from 'elliptic';
+
+const ec = new EC('secp256k1');
+
 export class Transaction {
   public fromAddress: string | null;
   public toAddress: string;
   public amount: number;
+  public signature: string;
 
   /**
-   * @param fromAddress The sender's address. Can be null for mining rewards.
-   * @param toAddress The recipient's address.
+   * @param fromAddress The sender's public key (wallet address). Can be null for mining rewards.
+   * @param toAddress The recipient's public key (wallet address).
    * @param amount The number of coins being sent.
    */
   constructor(fromAddress: string | null, toAddress: string, amount: number) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
+    this.signature = ''; // Will be populated when the transaction is signed
+  }
+
+  /**
+   * Calculates the hash of the transaction. We need to sign the hash of the data,
+   * not the raw data itself.
+   */
+  public calculateHash(): string {
+    return crypto
+      .createHash('sha256')
+      .update(this.fromAddress + this.toAddress + this.amount)
+      .digest('hex');
+  }
+
+  /**
+   * Signs the transaction with the given private key.
+   * @param signingKey The KeyPair object from elliptic.
+   */
+  public signTransaction(signingKey: EC.KeyPair): void {
+    // 1. You can only spend coins from a wallet you own!
+    // So we check if the public key of the person signing matches the 'fromAddress'
+    if (signingKey.getPublic('hex') !== this.fromAddress) {
+      throw new Error('You cannot sign transactions for other wallets!');
+    }
+
+    // 2. Hash the transaction data
+    const hashTx = this.calculateHash();
+    
+    // 3. Create the cryptographic signature
+    const sig = signingKey.sign(hashTx, 'base64');
+    
+    // 4. Store the signature in DER format (a standard way to represent signatures)
+    this.signature = sig.toDER('hex');
+  }
+
+  /**
+   * Verifies if the signature is valid and matches the transaction data.
+   */
+  public isValid(): boolean {
+    // 1. Mining rewards are valid by default (they have no 'from' address to check)
+    if (this.fromAddress === null) return true;
+
+    // 2. If it has no signature, it's definitely invalid
+    if (!this.signature || this.signature.length === 0) {
+      throw new Error('No signature in this transaction');
+    }
+
+    // 3. Verify the signature!
+    // We recreate the public key object from the 'fromAddress' hex string
+    const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
+    
+    // We check if the signature we stored was created by this public key for this specific transaction hash
+    return publicKey.verify(this.calculateHash(), this.signature);
   }
 }

@@ -54,8 +54,18 @@ export class Blockchain {
 
   /**
    * Adds a new transaction to the pool of pending transactions.
+   * It now enforces that the transaction must be signed and valid!
    */
   public createTransaction(transaction: Transaction): void {
+    if (!transaction.fromAddress || !transaction.toAddress) {
+      throw new Error('Transaction must include from and to address');
+    }
+
+    // Verify the transaction signature before adding it to the pool
+    if (!transaction.isValid()) {
+      throw new Error('Cannot add invalid transaction to chain');
+    }
+
     this.pendingTransactions.push(transaction);
   }
 
@@ -91,6 +101,13 @@ export class Blockchain {
     for (let i = 1; i < this.chain.length; i++) {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
+
+      // 1. Verify all transactions inside the current block
+      for (const tx of currentBlock.transactions) {
+        if (!tx.isValid()) {
+          return false; // A fake transaction was found!
+        }
+      }
 
       // 1. Check if the current block's hash is still mathematically correct
       // This detects if someone altered the 'data' or 'timestamp' of the current block
