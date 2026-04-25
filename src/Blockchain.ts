@@ -47,9 +47,8 @@ export class Blockchain {
       new Transaction(null, miningRewardAddress, this.miningReward)
     ];
 
-    // Halving mechanism: Every 5 blocks, the mining reward is cut in half
-    // (We use 5 here just so we can see it happen faster in our tests)
-    if (this.chain.length % 5 === 0) {
+    // Halving mechanism: Every 100 blocks, the mining reward is cut in half
+    if (this.chain.length % 100 === 0) {
       this.miningReward = this.miningReward / 2;
     }
   }
