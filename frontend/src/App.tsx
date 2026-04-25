@@ -30,7 +30,7 @@ function App() {
   }, [isDarkMode]);
 
   return (
-    <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+    <div className="container" style={{ maxWidth: '1440px', margin: '0 auto', padding: '20px' }}>
       <Header 
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode} 
@@ -39,32 +39,40 @@ function App() {
       />
 
       {/* Notifications */}
-      {error && (
-        <div className="glass-card" style={{ marginBottom: '20px', border: '1px solid #ef444455', color: '#f87171', display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <AlertCircle size={20} />
-          <p>{error}</p>
-        </div>
-      )}
-      {success && (
-        <div className="glass-card" style={{ marginBottom: '20px', border: '1px solid #10b98155', color: '#34d399', display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <CheckCircle2 size={20} />
-          <p>{success}</p>
-        </div>
-      )}
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, width: '400px' }}>
+        {error && (
+          <div className="glass-card" style={{ marginBottom: '10px', border: '1px solid #ef444455', color: '#f87171', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <AlertCircle size={20} />
+            <p>{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="glass-card" style={{ border: '1px solid #10b98155', color: '#34d399', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <CheckCircle2 size={20} />
+            <p>{success}</p>
+          </div>
+        )}
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '30px' }}>
-        {/* Left Column: Wallet & Actions */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+      <main style={{ display: 'grid', gridTemplateColumns: '320px 1fr 350px', gap: '20px', alignItems: 'start' }}>
+        {/* Column 1: Wallet & Actions */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <WalletCard address={walletAddress} balance={balance} />
-          <Mempool transactions={pendingTransactions} />
-          <ActivityList blocks={blocks} walletAddress={walletAddress} />
           <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
           <MiningCard mineBlock={mineBlock} isMining={isMining} />
         </section>
 
-        {/* Right Column: Block Explorer */}
-        <BlockExplorer blocks={blocks} />
-      </div>
+        {/* Column 2: The Main Chain Explorer */}
+        <section>
+          <BlockExplorer blocks={blocks} />
+        </section>
+
+        {/* Column 3: Feeds (Mempool & Activity) */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <Mempool transactions={pendingTransactions} />
+          <ActivityList blocks={blocks} walletAddress={walletAddress} />
+        </section>
+      </main>
     </div>
   );
 }

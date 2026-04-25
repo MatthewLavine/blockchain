@@ -21,21 +21,21 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
 
   return (
     <div className="glass-card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <div style={{ padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '10px', color: 'var(--accent-secondary)' }}>
-          <Send size={24} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ padding: '8px', background: 'rgba(168, 85, 247, 0.1)', borderRadius: '8px', color: 'var(--accent-secondary)' }}>
+          <Send size={20} />
         </div>
-        <h2 style={{ fontSize: '1.25rem' }}>Send Coins</h2>
+        <h2 style={{ fontSize: '1.1rem' }}>Send Coins</h2>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div>
           <input 
             type="text" 
             placeholder="Recipient Address" 
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none' }}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
           />
         </div>
         <div style={{ position: 'relative' }}>
@@ -44,12 +44,12 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
             placeholder="Amount" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none' }}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
           />
-          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>AGC</span>
+          <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>AGC</span>
         </div>
-        <button type="submit" className="btn-primary" disabled={isLoading}>
-          Sign & Send Transaction
+        <button type="submit" className="btn-primary" disabled={isLoading} style={{ padding: '10px 20px', fontSize: '0.875rem' }}>
+          Sign & Send
         </button>
       </form>
     </div>
