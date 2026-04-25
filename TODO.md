@@ -35,9 +35,9 @@
 - [x] Create `GET /mine` endpoint to trigger the mining process.
 - [ ] *(Advanced)* Connect multiple nodes together via WebSockets or HTTP to synchronize the chain (P2P).
 
-## Phase 7: Visual Web Interface (Front-end Dashboard)
-- [ ] Initialize a new modern web application (e.g., using Vite + React or Vanilla JS/CSS).
-- [ ] Create a "Blockchain Explorer" view to visually render the blocks and their hashes.
-- [ ] Create a "Wallet" interface to display balance and public key.
-- [ ] Create a "Send Transaction" form that handles cryptographic signing in the browser.
-- [ ] Implement beautiful, premium aesthetics with dark mode, micro-animations, and smooth gradients.
+## Phase 7: Visual Web Interface (Front-end Dashboard) (Completed)
+- [x] Initialize a new modern web application (e.g., using Vite + React or Vanilla JS/CSS).
+- [x] Create a "Blockchain Explorer" view to render the blocks and their hashes.
+- [x] Create a "Wallet" interface to display balance and public key.
+- [x] Create a "Send Transaction" form that handles cryptographic signing in the browser.
+- [x] Implement beautiful, premium aesthetics with dark mode, micro-animations, and smooth gradients.
