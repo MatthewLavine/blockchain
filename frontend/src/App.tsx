@@ -37,7 +37,7 @@ interface Block {
 
 function App() {
   // Theme State
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Wallet State
   const [keyPair, setKeyPair] = useState<any>(null);
