@@ -1,4 +1,5 @@
 # 🌌 Antigravity Chain
+[![CI](https://github.com/MatthewLavine/blockchain/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthewLavine/blockchain/actions/workflows/ci.yml)
 
 Antigravity Chain is a custom-built, cryptographically secure blockchain implementation with a premium, multi-panel React dashboard. It features a full peer-to-peer transaction model, mining rewards with halving mechanisms, and an interactive block explorer.
 
