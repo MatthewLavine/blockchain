@@ -77,4 +77,14 @@ export class Transaction {
     // We check if the signature we stored was created by this public key for this specific transaction hash
     return publicKey.verify(this.calculateHash(), this.signature);
   }
+
+  /**
+   * Static factory to create a Transaction instance from a raw object.
+   * Useful for hydrating data from JSON or P2P messages.
+   */
+  static fromObject(obj: any): Transaction {
+    const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount);
+    tx.signature = obj.signature;
+    return tx;
+  }
 }

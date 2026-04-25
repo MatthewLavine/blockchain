@@ -42,17 +42,11 @@ export class Blockchain {
     try {
       const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
 
-      // Hydrate transactions back into Transaction objects
-      this.chain = data.chain.map((block: any) => {
-        const hydratedBlock = Object.assign(new Block(0, 0, []), block);
-        hydratedBlock.transactions = block.transactions.map((tx: any) =>
-          Object.assign(new Transaction('', '', 0), tx)
-        );
-        return hydratedBlock;
-      });
+      // Hydrate chain and transactions using factory methods
+      this.chain = data.chain.map((block: any) => Block.fromObject(block));
 
       this.pendingTransactions = data.pendingTransactions.map((tx: any) =>
-        Object.assign(new Transaction('', '', 0), tx)
+        Transaction.fromObject(tx)
       );
 
       this.miningReward = data.miningReward;
@@ -122,8 +116,9 @@ export class Blockchain {
    * Directly adds a block to the chain and saves it to disk.
    * Useful for syncing blocks received from peers.
    */
-  public addBlock(newBlock: Block): void {
-    this.chain.push(newBlock);
+  public addBlock(newBlock: any): void {
+    const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
+    this.chain.push(hydratedBlock);
     this.saveToDisk();
   }
 
@@ -217,21 +212,23 @@ export class Blockchain {
    * Replaces the current chain with a new one, provided the new chain is longer and valid.
    * This is the core of the "Longest Chain Rule" in decentralization.
    */
-  public replaceChain(newChain: Block[]): boolean {
+  public replaceChain(newChain: any[]): boolean {
     if (newChain.length <= this.chain.length) {
       console.log('Received chain is not longer than current chain. Ignoring.');
       return false;
     }
 
+    // Hydrate the new chain for validation and use
+    const hydratedChain = newChain.map(obj => obj instanceof Block ? obj : Block.fromObject(obj));
+
     // Verify the new chain is valid before accepting it
-    // Note: We can't use this.isChainValid() directly because it checks this.chain
-    if (!this.isValidChain(newChain)) {
+    if (!this.isValidChain(hydratedChain)) {
       console.log('Received chain is invalid. Ignoring.');
       return false;
     }
 
     console.log('Replacing blockchain with the longer chain from peer.');
-    this.chain = newChain;
+    this.chain = hydratedChain;
     this.saveToDisk();
     return true;
   }

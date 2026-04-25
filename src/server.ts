@@ -72,8 +72,7 @@ app.post('/transaction', (req, res) => {
     const { fromAddress, toAddress, amount, signature } = req.body;
 
     // Reconstruct the transaction object
-    const tx = new Transaction(fromAddress, toAddress, amount);
-    tx.signature = signature;
+    const tx = Transaction.fromObject(req.body);
 
     // The createTransaction method internally checks tx.isValid()
     myCoin.createTransaction(tx);
