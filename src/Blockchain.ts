@@ -41,22 +41,30 @@ export class Blockchain {
     if (!this.storagePath || !fs.existsSync(this.storagePath)) return;
     try {
       const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
-      
+
       // Hydrate transactions back into Transaction objects
       this.chain = data.chain.map((block: any) => {
         const hydratedBlock = Object.assign(new Block(0, 0, []), block);
-        hydratedBlock.transactions = block.transactions.map((tx: any) => 
+        hydratedBlock.transactions = block.transactions.map((tx: any) =>
           Object.assign(new Transaction('', '', 0), tx)
         );
         return hydratedBlock;
       });
 
-      this.pendingTransactions = data.pendingTransactions.map((tx: any) => 
+      this.pendingTransactions = data.pendingTransactions.map((tx: any) =>
         Object.assign(new Transaction('', '', 0), tx)
       );
 
       this.miningReward = data.miningReward;
-      console.log(`Successfully loaded blockchain from disk (${this.chain.length} blocks)`);
+
+      // Validate the loaded chain
+      if (!this.isChainValid()) {
+        console.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
+        this.chain = [this.createGenesisBlock()];
+        this.pendingTransactions = [];
+      } else {
+        console.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
+      }
     } catch (err) {
       console.error('Failed to load blockchain from disk:', err);
     }
@@ -83,7 +91,7 @@ export class Blockchain {
    */
   public minePendingTransactions(miningRewardAddress: string): void {
     const block = new Block(this.chain.length, Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
-    
+
     block.mineBlock(this.difficulty);
     this.chain.push(block);
     console.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
