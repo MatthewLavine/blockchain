@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
+import { Block } from './Block';
 
 // Define message types to avoid string literal errors
 enum MessageType {
@@ -73,9 +74,6 @@ export class P2PServer {
         socket.on('error', () => this.removeSocket(socket));
 
         // When we first connect, perform the handshake:
-        // 1. Ask for latest block
-        // 2. Ask for their peer list (Gossip)
-        // 3. Tell them who we are (if we know)
         this.write(socket, { type: MessageType.QUERY_LATEST });
         this.write(socket, { type: MessageType.QUERY_PEERS });
         if (this.myAddress) {
@@ -86,17 +84,11 @@ export class P2PServer {
     private handleMessage(socket: WebSocket, message: any): void {
         switch (message.type) {
             case MessageType.QUERY_LATEST:
-                this.write(socket, {
-                    type: MessageType.RESPONSE_BLOCKCHAIN,
-                    data: [this.blockchain.getLatestBlock()]
-                });
+                this.handleQueryLatest(socket);
                 break;
 
             case MessageType.QUERY_ALL:
-                this.write(socket, {
-                    type: MessageType.RESPONSE_BLOCKCHAIN,
-                    data: this.blockchain.chain
-                });
+                this.handleQueryAll(socket);
                 break;
 
             case MessageType.RESPONSE_BLOCKCHAIN:
@@ -108,10 +100,7 @@ export class P2PServer {
                 break;
 
             case MessageType.QUERY_PEERS:
-                this.write(socket, {
-                    type: MessageType.RESPONSE_PEERS,
-                    data: Array.from(this.peerUrls)
-                });
+                this.handleQueryPeers(socket);
                 break;
 
             case MessageType.RESPONSE_PEERS:
@@ -119,32 +108,61 @@ export class P2PServer {
                 break;
 
             case MessageType.ANNOUNCE_SELF:
-                if (message.data && message.data !== this.myAddress) {
-                    // Check if we already have an active socket for this address
-                    const existingSocket = this.sockets.find(s => (s as any).peerAddress === message.data);
-
-                    if (existingSocket && existingSocket !== socket) {
-                        socket.close();
-                        return;
-                    }
-
-                    if (!this.peerUrls.has(message.data)) {
-                        this.peerUrls.add(message.data);
-                        // Share this new node with everyone else!
-                        this.broadcast({ type: MessageType.RESPONSE_PEERS, data: [message.data] });
-                    }
-
-                    // Tag the socket with the peer address for deduplication/tracking
-                    (socket as any).peerAddress = message.data;
-                    console.log(`Peer connected: ${message.data}. Total unique peers: ${this.getPeers().length}`);
-                }
+                this.handleAnnounceSelf(socket, message.data);
                 break;
 
             case MessageType.RESET_CHAIN:
-                console.log('Received RESET_CHAIN signal. Wiping local state.');
-                this.blockchain.reset();
+                this.handleResetChain();
                 break;
         }
+    }
+
+    private handleQueryLatest(socket: WebSocket): void {
+        this.write(socket, {
+            type: MessageType.RESPONSE_BLOCKCHAIN,
+            data: [this.blockchain.getLatestBlock()]
+        });
+    }
+
+    private handleQueryAll(socket: WebSocket): void {
+        this.write(socket, {
+            type: MessageType.RESPONSE_BLOCKCHAIN,
+            data: this.blockchain.chain
+        });
+    }
+
+    private handleQueryPeers(socket: WebSocket): void {
+        this.write(socket, {
+            type: MessageType.RESPONSE_PEERS,
+            data: Array.from(this.peerUrls)
+        });
+    }
+
+    private handleAnnounceSelf(socket: WebSocket, peerAddress: string): void {
+        if (!peerAddress || peerAddress === this.myAddress) return;
+
+        // Check if we already have an active socket for this address
+        const existingSocket = this.sockets.find(s => (s as any).peerAddress === peerAddress);
+
+        if (existingSocket && existingSocket !== socket) {
+            socket.close();
+            return;
+        }
+
+        if (!this.peerUrls.has(peerAddress)) {
+            this.peerUrls.add(peerAddress);
+            // Share this new node with everyone else!
+            this.broadcast({ type: MessageType.RESPONSE_PEERS, data: [peerAddress] });
+        }
+
+        // Tag the socket with the peer address for deduplication/tracking
+        (socket as any).peerAddress = peerAddress;
+        console.log(`Peer connected: ${peerAddress}. Total unique peers: ${this.getPeers().length}`);
+    }
+
+    private handleResetChain(): void {
+        console.log('Received RESET_CHAIN signal. Wiping local state.');
+        this.blockchain.reset();
     }
 
     private handlePeerListResponse(receivedPeerUrls: string[]): void {
@@ -161,34 +179,26 @@ export class P2PServer {
         const latestBlockReceived = receivedBlocks[receivedBlocks.length - 1];
         const latestBlockHeld = this.blockchain.getLatestBlock();
 
-        // If the received block is newer than what we have
         if (latestBlockReceived.index > latestBlockHeld.index) {
-            // If the received block follows our current head, just add it
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
                 console.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
                 this.blockchain.addBlock(latestBlockReceived);
                 this.broadcastLatest();
-            } 
-            // If we received exactly one block that doesn't follow ours, we need to request the whole chain
-            else if (receivedBlocks.length === 1) {
+            } else if (receivedBlocks.length === 1) {
                 console.log(`Out of sync. Requesting full chain from peer (Local: ${latestBlockHeld.index}, Peer: ${latestBlockReceived.index})`);
                 this.broadcast({ type: MessageType.QUERY_ALL });
-            } 
-            // Otherwise, we've received a multi-block chain. Try to replace our local chain.
-            else {
+            } else {
                 console.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
                 this.blockchain.replaceChain(receivedBlocks);
             }
-        } else {
-            // Received blockchain is not longer than local blockchain. Do nothing silently.
         }
     }
 
     private handleTransactionBroadcast(data: any): void {
-        const tx = Object.assign(new Transaction(null, '', 0), data);
         try {
+            const tx = Transaction.fromObject(data);
             this.blockchain.createTransaction(tx);
-            // Re-broadcast to other peers who might not have it
+            // Re-broadcast to other peers
             this.broadcast({ type: MessageType.BROADCAST_TRANSACTION, data: tx });
         } catch (err) {
             // Transaction might already be in mempool or is invalid, ignore
@@ -230,7 +240,6 @@ export class P2PServer {
         this.sockets = this.sockets.filter(s => s !== socket);
         const address = (socket as any).peerAddress;
         if (address) {
-            // Check if we still have ANY socket for this address
             const remaining = this.sockets.some(s => (s as any).peerAddress === address);
             if (!remaining) {
                 this.peerUrls.delete(address);
@@ -240,7 +249,6 @@ export class P2PServer {
     }
 
     public getPeers(): string[] {
-        // Return unique peer addresses from both the tracked Set and the active sockets
         const activeAddresses = this.sockets
             .map(s => (s as any).peerAddress)
             .filter(addr => addr && addr !== this.myAddress);

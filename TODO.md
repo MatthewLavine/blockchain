@@ -58,7 +58,7 @@
 - [x] Implement **Global Reset Propagation** to synchronize state purges across the network.
 
 ## Phase 10: Code Refactoring & Type Safety (Current)
-- [ ] **Unified Serialization**: Implement static `.fromJSON()` factories for `Block` and `Transaction` classes.
+- [x] **Unified Serialization**: Implement static `.fromJSON()` factories for `Block` and `Transaction` classes.
 - [ ] **P2P Message Handlers**: Decompose the massive `handleMessage` switch into discrete, named handler methods.
 - [ ] **Type Enforcement**: Define TypeScript interfaces for all P2P message payloads (removing `any`).
 - [ ] **Context-Aware Logger**: Create a utility to prefix logs with node identity (e.g. `[Node 3000]`).
