@@ -62,7 +62,7 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
                 </div>
                 
                 <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', paddingLeft: '30px' }}>
-                  {isSent ? `To: ${tx.toAddress.substring(0, 20)}...` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress.substring(0, 20)}...`)}
+                  {isSent ? `To: ${tx.toAddress.substring(0, 20)}...` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress?.substring(0, 20)}...`)}
                 </div>
               </div>
             );

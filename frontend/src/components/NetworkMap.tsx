@@ -1,4 +1,4 @@
-import { Share2, Globe, Server, Activity, ChevronRight, X, Plus } from 'lucide-react';
+import { Share2, Globe, Server, Activity, X, Plus } from 'lucide-react';
 
 interface NetworkMapProps {
   isOpen: boolean;

@@ -80,7 +80,7 @@ export function useBlockchain() {
   }, [fetchData]);
 
   const sendTransaction = async (recipient: string, amount: number) => {
-    if (!keyPair || !recipient || !amount) return;
+    if (!keyPair || !recipient || !amount) return false;
     try {
       const tx = { fromAddress: walletAddress, toAddress: recipient, amount };
       const hash = SHA256(tx.fromAddress + tx.toAddress + tx.amount).toString();
@@ -125,7 +125,7 @@ export function useBlockchain() {
 
   const resetChain = async () => {
     setIsLoading(true);
-    setError(null);
+    setError('');
     try {
       const response = await fetch(`${API_BASE}/reset`, {
         method: 'POST',
@@ -137,7 +137,7 @@ export function useBlockchain() {
       setError('Failed to reset blockchain.');
     } finally {
       setIsLoading(false);
-      setTimeout(() => setSuccess(null), 3000);
+      setTimeout(() => setSuccess(''), 3000);
     }
   };
 

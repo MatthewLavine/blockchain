@@ -97,7 +97,7 @@ export const BlockModal: React.FC<BlockModalProps> = ({ block, onClose }) => {
                   <div style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1rem' }}>
                     {tx.amount} AGC
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', padding: '2px 8px', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', padding: '2px 8px', borderRadius: '4px' }}>
                     Confirmed
                   </div>
                 </div>

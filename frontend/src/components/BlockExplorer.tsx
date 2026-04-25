@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Lock, CheckCircle2 } from 'lucide-react';
+import { Database, CheckCircle2 } from 'lucide-react';
 import { Block } from '../hooks/useBlockchain';
 
 interface BlockExplorerProps {
