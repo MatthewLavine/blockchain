@@ -11,6 +11,12 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    develop:
+      watch:
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/src
+          action: rebuild
 
   node1:
     build: .
@@ -31,6 +37,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
 
   node2:
     build: .
@@ -49,6 +61,12 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
 
   node3:
     build: .
@@ -67,6 +85,12 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
 
   node4:
     build: .
@@ -85,6 +109,12 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
 
   node5:
     build: .
@@ -103,6 +133,12 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
 
 networks:
   blockchain-net:
