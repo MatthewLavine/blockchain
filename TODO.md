@@ -51,12 +51,13 @@
 - [x] Create automation scripts (`.ps1` and `.sh`) to launch multi-node local networks.
 - [x] Implement a "Seed Node" mechanism for self-healing connections.
 
-## Phase 9: Persistence (Database) (Next Up!)
-- [ ] Implement a storage layer to save the blockchain to disk (e.g., `chain.json` or LevelDB).
-- [ ] Load the existing chain from disk on startup instead of starting from Genesis.
-- [ ] Ensure the P2P layer handles disk-loaded chains correctly during sync.
+## Phase 9: Persistence (Database) (Completed)
+- [x] Implement a storage layer to save the blockchain to disk (port-specific JSON files).
+- [x] Load and cryptographically verify the existing chain from disk on startup.
+- [x] Ensure the P2P layer handles disk-loaded chains correctly during sync.
+- [x] Implement **Global Reset Propagation** to synchronize state purges across the network.
 
-## Phase 10: Network Evolution
+## Phase 10: Network Evolution (Next Up!)
 - [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
 - [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
 - [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
