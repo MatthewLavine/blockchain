@@ -6,6 +6,7 @@ import { ActivityList } from './components/ActivityList';
 import { TransactionForm } from './components/TransactionForm';
 import { MiningCard } from './components/MiningCard';
 import { BlockExplorer } from './components/BlockExplorer';
+import { Mempool } from './components/Mempool';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
     walletAddress,
     balance,
     blocks,
+    pendingTransactions,
     isLoading,
     isMining,
     error,
@@ -54,6 +56,7 @@ function App() {
         {/* Left Column: Wallet & Actions */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
           <WalletCard address={walletAddress} balance={balance} />
+          <Mempool transactions={pendingTransactions} />
           <ActivityList blocks={blocks} walletAddress={walletAddress} />
           <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
           <MiningCard mineBlock={mineBlock} isMining={isMining} />

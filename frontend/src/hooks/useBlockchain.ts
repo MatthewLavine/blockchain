@@ -29,6 +29,7 @@ export function useBlockchain() {
 
   // Blockchain State
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isMining, setIsMining] = useState(false);
   const [error, setError] = useState('');
@@ -47,12 +48,14 @@ export function useBlockchain() {
     if (!silent) setIsLoading(true);
     
     try {
-      const [blocksRes, balanceRes] = await Promise.all([
+      const [blocksRes, balanceRes, pendingRes] = await Promise.all([
         axios.get(`${API_BASE}/blocks`),
-        axios.get(`${API_BASE}/balance/${walletAddress}`)
+        axios.get(`${API_BASE}/balance/${walletAddress}`),
+        axios.get(`${API_BASE}/pending`)
       ]);
       setBlocks(blocksRes.data.reverse());
       setBalance(balanceRes.data.balance);
+      setPendingTransactions(pendingRes.data);
       setError('');
     } catch (err) {
       if (!silent) setError('Failed to connect to the blockchain node.');
@@ -108,6 +111,7 @@ export function useBlockchain() {
     walletAddress,
     balance,
     blocks,
+    pendingTransactions,
     isLoading,
     isMining,
     error,

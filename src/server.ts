@@ -30,6 +30,13 @@ app.get('/balance/:address', (req, res) => {
 });
 
 /**
+ * Returns the list of pending transactions in the mempool
+ */
+app.get('/pending', (req, res) => {
+  res.json(myCoin.pendingTransactions);
+});
+
+/**
  * Accepts a new signed transaction and adds it to the pending pool
  * Expects JSON body: { fromAddress, toAddress, amount, signature }
  */
