@@ -59,7 +59,7 @@ describe('Block', () => {
   });
 
   test('mineBlock() increments nonce until a solution is found', () => {
-    const block = new Block(1, Date.now(), [], '0');
+    const block = new Block(1, 123456789, [], '0');
     expect(block.nonce).toBe(0);
     block.mineBlock(2);
     expect(block.nonce).toBeGreaterThan(0);
