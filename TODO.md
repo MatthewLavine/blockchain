@@ -23,10 +23,10 @@
 - [x] Sign transactions with a private key.
 - [x] Verify transaction signatures before adding them to a block.
 
-## Phase 5: Polishing the Core Logic
-- [ ] Prevent negative balances (ensure sender has enough funds before accepting a transaction).
-- [ ] Ensure mining rewards don't artificially inflate the system too easily (e.g., halving the reward over time, or hardcoding max supply).
-- [ ] Add basic transaction validation (e.g., amount must be > 0).
+## Phase 5: Polishing the Core Logic (Completed)
+- [x] Prevent negative balances (ensure sender has enough funds before accepting a transaction).
+- [x] Ensure mining rewards don't artificially inflate the system too easily (e.g., halving the reward over time, or hardcoding max supply).
+- [x] Add basic transaction validation (e.g., amount must be > 0).
 
 ## Phase 6: Networking & HTTP API (The Decentralized Part)
 - [ ] Initialize an Express.js server to run our node.

@@ -35,35 +35,49 @@ export class Blockchain {
    * @param miningRewardAddress The wallet address to send the mining reward to.
    */
   public minePendingTransactions(miningRewardAddress: string): void {
-    // In a real blockchain like Bitcoin, a block has a max size and miners choose which
-    // transactions to include. For this tutorial, we just include all pending transactions.
     const block = new Block(Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
     
-    // Mine the block
     block.mineBlock(this.difficulty);
 
     console.log('Block successfully mined!');
     this.chain.push(block);
 
-    // Reset the pending transactions array and add the mining reward for the NEXT block
-    // Notice that the 'fromAddress' is null because the system is creating these coins out of thin air!
+    // Reset pending transactions with the mining reward
     this.pendingTransactions = [
       new Transaction(null, miningRewardAddress, this.miningReward)
     ];
+
+    // Halving mechanism: Every 5 blocks, the mining reward is cut in half
+    // (We use 5 here just so we can see it happen faster in our tests)
+    if (this.chain.length % 5 === 0) {
+      this.miningReward = this.miningReward / 2;
+    }
   }
 
   /**
    * Adds a new transaction to the pool of pending transactions.
-   * It now enforces that the transaction must be signed and valid!
+   * It enforces that the transaction must be signed, valid, and the sender has enough funds!
    */
   public createTransaction(transaction: Transaction): void {
     if (!transaction.fromAddress || !transaction.toAddress) {
       throw new Error('Transaction must include from and to address');
     }
 
-    // Verify the transaction signature before adding it to the pool
     if (!transaction.isValid()) {
       throw new Error('Cannot add invalid transaction to chain');
+    }
+
+    // Prevent sending more than the wallet has!
+    // We must calculate the balance based on the mined chain PLUS the pending transactions they've already submitted.
+    let currentBalance = this.getBalanceOfAddress(transaction.fromAddress);
+    for (const pendingTx of this.pendingTransactions) {
+      if (pendingTx.fromAddress === transaction.fromAddress) {
+        currentBalance -= pendingTx.amount;
+      }
+    }
+
+    if (currentBalance < transaction.amount) {
+      throw new Error('Not enough balance to complete this transaction');
     }
 
     this.pendingTransactions.push(transaction);
