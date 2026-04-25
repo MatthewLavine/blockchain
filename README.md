@@ -2,6 +2,9 @@
 
 Antigravity Chain is a custom-built, cryptographically secure blockchain implementation with a premium, multi-panel React dashboard. It features a full peer-to-peer transaction model, mining rewards with halving mechanisms, and an interactive block explorer.
 
+> [!NOTE]
+> I used gemini to write this app as an exercise to learn how blockchains work.
+
 ## ✨ Features
 
 - **🔐 Cryptographically Secure**: Uses Elliptic Curve Cryptography (ECC) for transaction signing and SHA-256 for block hashing.
