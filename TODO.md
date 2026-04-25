@@ -28,11 +28,11 @@
 - [x] Ensure mining rewards don't artificially inflate the system too easily (e.g., halving the reward over time, or hardcoding max supply).
 - [x] Add basic transaction validation (e.g., amount must be > 0).
 
-## Phase 6: Networking & HTTP API (The Decentralized Part)
-- [ ] Initialize an Express.js server to run our node.
-- [ ] Create `GET /blocks` endpoint to view the blockchain.
-- [ ] Create `POST /transaction` endpoint to submit a new signed transaction.
-- [ ] Create `GET /mine` endpoint to trigger the mining process.
+## Phase 6: Networking & HTTP API (The Decentralized Part) (Completed)
+- [x] Initialize an Express.js server to run our node.
+- [x] Create `GET /blocks` endpoint to view the blockchain.
+- [x] Create `POST /transaction` endpoint to submit a new signed transaction.
+- [x] Create `GET /mine` endpoint to trigger the mining process.
 - [ ] *(Advanced)* Connect multiple nodes together via WebSockets or HTTP to synchronize the chain (P2P).
 
 ## Phase 7: Visual Web Interface (Front-end Dashboard)
