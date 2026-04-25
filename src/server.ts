@@ -22,7 +22,7 @@ const p2pServer = new P2PServer(myCoin);
 // Auto-connect to seed node if provided
 const seedNode = process.env.SEED_NODE;
 if (seedNode) {
-  console.log(`Connecting to seed node: ${seedNode}`);
+  Logger.log(`Connecting to seed node: ${seedNode}`);
   p2pServer.connectToPeer(seedNode);
 }
 
@@ -110,6 +110,6 @@ app.post('/mine', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Blockchain Node listening at http://localhost:${port}`);
+  Logger.log(`Blockchain Node listening at http://localhost:${port}`);
   p2pServer.listen(Number(p2pPort));
 });
