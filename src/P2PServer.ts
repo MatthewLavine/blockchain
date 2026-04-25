@@ -169,7 +169,7 @@ export class P2PServer {
                 this.blockchain.replaceChain(receivedBlocks);
             }
         } else {
-            console.log('Received blockchain is not longer than local blockchain. Do nothing.');
+            // Received blockchain is not longer than local blockchain. Do nothing silently.
         }
     }
 
