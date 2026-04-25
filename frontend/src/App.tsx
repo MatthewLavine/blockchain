@@ -12,7 +12,9 @@ import {
   History,
   AlertCircle,
   CheckCircle2,
-  Lock
+  Lock,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const ec = new EC('secp256k1');
@@ -34,6 +36,9 @@ interface Block {
 }
 
 function App() {
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
   // Wallet State
   const [keyPair, setKeyPair] = useState<any>(null);
   const [walletAddress, setWalletAddress] = useState('');
@@ -49,6 +54,11 @@ function App() {
   // Form State
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
+
+  // 0. Theme Effect
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   // 1. Initialize Wallet
   useEffect(() => {
@@ -150,10 +160,24 @@ function App() {
           <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: 700 }}>Antigravity Chain</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Secure, Transparent, Decentralized.</p>
         </div>
-        <button onClick={() => fetchData(false)} className="glass-card" style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <RefreshCcw size={20} className={isLoading ? 'animate-spin' : ''} />
-          <span>Refresh</span>
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            onClick={() => setIsDarkMode(!isDarkMode)} 
+            className="glass-card" 
+            style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center' }}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button 
+            onClick={() => fetchData(false)} 
+            className="glass-card" 
+            style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}
+          >
+            <RefreshCcw size={20} className={isLoading ? 'animate-spin' : ''} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </header>
 
       {/* Notifications */}
