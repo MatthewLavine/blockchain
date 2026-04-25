@@ -150,7 +150,7 @@ function App() {
           <h1 className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: 700 }}>Antigravity Chain</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Secure, Transparent, Decentralized.</p>
         </div>
-        <button onClick={fetchData} className="glass-card" style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <button onClick={() => fetchData(false)} className="glass-card" style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}>
           <RefreshCcw size={20} className={isLoading ? 'animate-spin' : ''} />
           <span>Refresh</span>
         </button>
