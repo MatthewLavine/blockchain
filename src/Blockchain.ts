@@ -38,9 +38,8 @@ export class Blockchain {
     const block = new Block(this.chain.length, Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
     
     block.mineBlock(this.difficulty);
-
-    console.log('Block successfully mined!');
     this.chain.push(block);
+    console.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
 
     // Reset pending transactions with the mining reward
     this.pendingTransactions = [
