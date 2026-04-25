@@ -1,5 +1,5 @@
-import React from 'react';
-import { Wallet, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wallet, Shield, Copy, Check } from 'lucide-react';
 
 interface WalletCardProps {
   address: string;
@@ -7,6 +7,15 @@ interface WalletCardProps {
 }
 
 export const WalletCard: React.FC<WalletCardProps> = ({ address, balance }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="glass-card">
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
@@ -17,7 +26,16 @@ export const WalletCard: React.FC<WalletCardProps> = ({ address, balance }) => {
       </div>
       
       <div style={{ marginBottom: '16px' }}>
-        <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Public Address</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Public Address</label>
+          <button 
+            onClick={handleCopy}
+            style={{ color: copied ? 'var(--accent-success)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem' }}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            <span>{copied ? 'Copied!' : 'Copy'}</span>
+          </button>
+        </div>
         <div className="glass-card" style={{ padding: '8px', fontSize: '0.7rem', overflowWrap: 'anywhere', background: 'rgba(0,0,0,0.2)', border: '1px dashed var(--glass-border)' }}>
           {address || 'Generating...'}
         </div>
