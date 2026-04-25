@@ -9,6 +9,7 @@ import { BlockExplorer } from './components/BlockExplorer';
 import { Mempool } from './components/Mempool';
 import { BlockModal } from './components/BlockModal';
 import { TransactionModal } from './components/TransactionModal';
+import { NetworkMap } from './components/NetworkMap';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Block, Transaction } from './hooks/useBlockchain';
 
@@ -16,6 +17,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
   const {
     walletAddress,
     balance,
@@ -45,6 +47,7 @@ function App() {
         fetchData={fetchData} 
         resetChain={resetChain}
         peers={peers}
+        onPeersClick={() => setIsNetworkModalOpen(true)}
         addPeer={addPeer}
         isLoading={isLoading} 
       />
@@ -93,6 +96,15 @@ function App() {
 
       <BlockModal block={selectedBlock} onClose={() => setSelectedBlock(null)} />
       <TransactionModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+      <NetworkMap 
+        isOpen={isNetworkModalOpen} 
+        onClose={() => setIsNetworkModalOpen(false)} 
+        peers={peers} 
+        onAddPeer={() => {
+          const url = window.prompt('Enter Peer WebSocket URL (e.g., ws://localhost:6001):');
+          if (url) addPeer(url);
+        }} 
+      />
     </div>
   );
 }

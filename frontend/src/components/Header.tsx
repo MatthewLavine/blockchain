@@ -6,11 +6,12 @@ interface HeaderProps {
   fetchData: (silent?: boolean) => void;
   resetChain: () => void;
   peers: string[];
+  onPeersClick: () => void;
   addPeer: (url: string) => void;
   isLoading: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, resetChain, peers, addPeer, isLoading }) => {
+export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, resetChain, peers, onPeersClick, addPeer, isLoading }) => {
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset the entire blockchain? This cannot be undone.')) {
       resetChain();
@@ -28,7 +29,21 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetch
         <h1 className="gradient-text" style={{ fontSize: '2.2rem', fontWeight: 700, lineHeight: 1.2 }}>Antigravity Chain</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Secure, Transparent, Decentralized.</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 600 }}>
+          <div 
+            onClick={onPeersClick}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '4px', 
+              background: 'rgba(16, 185, 129, 0.1)', 
+              color: 'var(--accent-success)', 
+              padding: '2px 8px', 
+              borderRadius: '12px', 
+              fontSize: '0.7rem', 
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
             <Users size={12} />
             <span>{peers.length} Peers</span>
           </div>
