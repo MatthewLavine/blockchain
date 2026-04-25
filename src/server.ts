@@ -2,9 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
+import { P2PServer } from './P2PServer';
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const p2pPort = process.env.P2P_PORT || 6000;
 
 // Middleware
 app.use(cors());
@@ -12,6 +14,7 @@ app.use(express.json());
 
 // Initialize our blockchain
 let myCoin = new Blockchain();
+const p2pServer = new P2PServer(myCoin);
 
 /**
  * Returns the entire blockchain
@@ -41,6 +44,16 @@ app.post('/reset', (req, res) => {
   res.json({ message: 'Blockchain has been reset successfully.' });
 });
 
+app.get('/peers', (req, res) => {
+  res.json(p2pServer.getPeers());
+});
+
+app.post('/addPeer', (req, res) => {
+  const peerUrl = req.body.peer;
+  p2pServer.connectToPeer(peerUrl);
+  res.json({ message: `Attempting to connect to peer: ${peerUrl}` });
+});
+
 /**
  * Accepts a new signed transaction and adds it to the pending pool
  * Expects JSON body: { fromAddress, toAddress, amount, signature }
@@ -55,6 +68,7 @@ app.post('/transaction', (req, res) => {
 
     // The createTransaction method internally checks tx.isValid()
     myCoin.createTransaction(tx);
+    p2pServer.broadcastTransaction(tx);
     
     res.json({ message: 'Transaction successfully added to pending pool!' });
   } catch (error: any) {
@@ -75,6 +89,7 @@ app.post('/mine', (req, res) => {
 
   try {
     myCoin.minePendingTransactions(rewardAddress);
+    p2pServer.broadcastLatest();
     res.json({ 
       message: 'Block successfully mined!',
       latestBlock: myCoin.getLatestBlock()
@@ -86,9 +101,5 @@ app.post('/mine', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Blockchain Node listening at http://localhost:${port}`);
-  console.log('Available endpoints:');
-  console.log(' - GET  /blocks');
-  console.log(' - GET  /balance/:address');
-  console.log(' - POST /transaction');
-  console.log(' - POST /mine');
+  p2pServer.listen(Number(p2pPort));
 });

@@ -28,7 +28,9 @@ function App() {
     fetchData,
     sendTransaction,
     mineBlock,
-    resetChain
+    addPeer,
+    resetChain,
+    peers
   } = useBlockchain();
 
   useEffect(() => {
@@ -42,6 +44,8 @@ function App() {
         setIsDarkMode={setIsDarkMode} 
         fetchData={fetchData} 
         resetChain={resetChain}
+        peers={peers}
+        addPeer={addPeer}
         isLoading={isLoading} 
       />
 
