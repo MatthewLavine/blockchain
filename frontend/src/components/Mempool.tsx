@@ -18,16 +18,17 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions }) => {
           marginLeft: 'auto', 
           background: 'rgba(99, 102, 241, 0.1)', 
           color: 'var(--accent-primary)', 
-          padding: '4px 12px', 
+          padding: '4px 10px', 
           borderRadius: '20px', 
           fontSize: '0.75rem', 
-          fontWeight: 600 
+          fontWeight: 600,
+          whiteSpace: 'nowrap'
         }}>
-          {transactions.length} Transactions
+          {transactions.length} Txs
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
         {transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
             No pending transactions. All clear!
@@ -44,9 +45,9 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions }) => {
               border: '1px solid rgba(99, 102, 241, 0.2)' 
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
                   <Send size={14} />
-                  <span>{tx.amount} AGC</span>
+                  <span>{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
                 </div>
                 <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>Pending</span>
               </div>

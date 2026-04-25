@@ -21,7 +21,7 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
         <h2 style={{ fontSize: '1.25rem' }}>Recent Activity</h2>
       </div>
 
-      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
         {transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No transactions found for this wallet.</p>
         ) : (
@@ -50,8 +50,8 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
                     </div>
                     <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)' }}>
-                    {isSent && !isMiningReward ? '-' : '+'}{tx.amount}
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                    {isSent && !isMiningReward ? '-' : '+'}{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
                   </div>
                 </div>
                 

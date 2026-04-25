@@ -16,7 +16,7 @@ export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks }) => {
         <h2 style={{ fontSize: '1.25rem' }}>Blockchain Ledger</h2>
       </div>
 
-      <div style={{ overflowY: 'auto', overflowX: 'auto', flex: 1 }}>
+      <div style={{ overflowY: 'auto', overflowX: 'auto', flex: 1, paddingRight: '10px' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
           <thead style={{ 
             position: 'sticky', 
