@@ -8,23 +8,31 @@ interface BlockExplorerProps {
 
 export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks }) => {
   return (
-    <section className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+    <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexShrink: 0 }}>
         <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
           <Database size={24} />
         </div>
         <h2 style={{ fontSize: '1.25rem' }}>Blockchain Ledger</h2>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowY: 'auto', overflowX: 'auto', flex: 1 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
-          <thead>
-            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
-              <th style={{ padding: '10px 8px', fontWeight: 500 }}>Index</th>
-              <th style={{ padding: '10px 8px', fontWeight: 500 }}>Hash</th>
-              <th style={{ padding: '10px 8px', fontWeight: 500 }}>Time</th>
-              <th style={{ padding: '10px 8px', fontWeight: 500 }}>Txs</th>
-              <th style={{ padding: '10px 8px', fontWeight: 500, textAlign: 'right' }}>Status</th>
+          <thead style={{ 
+            position: 'sticky', 
+            top: 0, 
+            background: 'var(--table-header-bg)', 
+            zIndex: 10,
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            borderBottom: '2px solid var(--glass-border)'
+          }}>
+            <tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}>
+              <th style={{ padding: '14px 10px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Index</th>
+              <th style={{ padding: '14px 10px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Hash</th>
+              <th style={{ padding: '14px 10px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Time</th>
+              <th style={{ padding: '14px 10px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em' }}>Txs</th>
+              <th style={{ padding: '14px 10px', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.05em', textAlign: 'right' }}>Status</th>
             </tr>
           </thead>
           <tbody>

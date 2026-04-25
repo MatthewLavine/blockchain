@@ -3,7 +3,7 @@
 :root {
   --bg-primary: #0a0b10;
   --bg-secondary: #141620;
-  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.08);
   --accent-primary: #6366f1;
   --accent-secondary: #a855f7;
@@ -11,6 +11,7 @@
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --body-gradient: radial-gradient(circle at top right, #1e1b4b, #0a0b10 40%);
+  --table-header-bg: rgba(20, 22, 32, 0.8);
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -33,6 +34,7 @@
   --text-primary: #0f172a;
   --text-secondary: #64748b;
   --body-gradient: radial-gradient(circle at top right, #e0e7ff, #f8fafc 40%);
+  --table-header-bg: rgba(255, 255, 255, 0.8);
 }
 
 * {
@@ -70,7 +72,18 @@ button {
   border-radius: 20px;
   padding: 24px;
   box-shadow: var(--shadow-xl);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+[data-theme='light'] .glass-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .gradient-text {

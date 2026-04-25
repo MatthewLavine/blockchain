@@ -13,7 +13,7 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
     .filter(tx => tx.fromAddress === walletAddress || tx.toAddress === walletAddress);
 
   return (
-    <div className="glass-card" style={{ maxHeight: '400px', display: 'flex', flexDirection: 'column' }}>
+    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
         <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
           <History size={24} />
@@ -29,23 +29,34 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
             const isSent = tx.fromAddress === walletAddress;
             const isMiningReward = tx.fromAddress === null;
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px', background: 'rgba(0,0,0,0.1)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                <div style={{ 
-                  padding: '8px', 
-                  borderRadius: '8px', 
-                  background: isMiningReward ? 'rgba(16, 185, 129, 0.1)' : (isSent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'),
-                  color: isMiningReward ? 'var(--accent-success)' : (isSent ? '#f87171' : 'var(--accent-success)')
-                }}>
-                  {isMiningReward ? <Cpu size={18} /> : (isSent ? <Send size={18} style={{ transform: 'rotate(-45deg)' }} /> : <Send size={18} style={{ transform: 'rotate(135deg)' }} />)}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                    {isSent ? `To: ${tx.toAddress}` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress}`)}
+              <div key={i} style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '6px', 
+                padding: '10px', 
+                background: 'rgba(0,0,0,0.1)', 
+                borderRadius: '10px', 
+                border: '1px solid var(--glass-border)' 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ 
+                      padding: '6px', 
+                      borderRadius: '6px', 
+                      background: isMiningReward ? 'rgba(16, 185, 129, 0.1)' : (isSent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'),
+                      color: isMiningReward ? 'var(--accent-success)' : (isSent ? '#f87171' : 'var(--accent-success)')
+                    }}>
+                      {isMiningReward ? <Cpu size={14} /> : (isSent ? <Send size={14} style={{ transform: 'rotate(-45deg)' }} /> : <Send size={14} style={{ transform: 'rotate(135deg)' }} />)}
+                    </div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)' }}>
+                    {isSent && !isMiningReward ? '-' : '+'}{tx.amount}
                   </div>
                 </div>
-                <div style={{ fontWeight: 700, color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)' }}>
-                  {isSent && !isMiningReward ? '-' : '+'}{tx.amount}
+                
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', paddingLeft: '30px' }}>
+                  {isSent ? `To: ${tx.toAddress.substring(0, 20)}...` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress.substring(0, 20)}...`)}
                 </div>
               </div>
             );

@@ -19,18 +19,20 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetch
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="glass-card"
-          style={{ padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center' }}
+          style={{ padding: '10px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', color: 'var(--text-primary)' }}
           title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          <div style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center' }}>
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </div>
         </button>
         <button
           onClick={() => fetchData(false)}
           className="glass-card"
-          style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '8px', alignItems: 'center' }}
+          style={{ padding: '10px 16px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-primary)' }}
         >
-          <RefreshCcw size={20} className={isLoading ? 'animate-spin' : ''} />
-          <span>Refresh</span>
+          <RefreshCcw size={18} className={isLoading ? 'animate-spin' : ''} style={{ color: 'var(--accent-primary)' }} />
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Refresh</span>
         </button>
       </div>
     </header>

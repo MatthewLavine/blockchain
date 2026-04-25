@@ -74,7 +74,7 @@ function App() {
         </section>
 
         {/* Column 3: Network Feeds */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
           <Mempool transactions={pendingTransactions} />
           <ActivityList blocks={blocks} walletAddress={walletAddress} />
         </section>
