@@ -1,11 +1,14 @@
 import { Block } from './Block';
 import { Transaction } from './Transaction';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class Blockchain {
   public chain: Block[];
   public difficulty: number;
   public pendingTransactions: Transaction[];
   public miningReward: number;
+  private storagePath: string | null = null;
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
@@ -13,6 +16,50 @@ export class Blockchain {
     this.difficulty = 4;
     this.pendingTransactions = [];
     this.miningReward = 100; // Reward the miner with 100 coins
+  }
+
+  public setStoragePath(id: string | number): void {
+    this.storagePath = path.join(__dirname, '..', 'data', `blockchain_${id}.json`);
+    this.loadFromDisk();
+  }
+
+  private saveToDisk(): void {
+    if (!this.storagePath) return;
+    try {
+      const data = JSON.stringify({
+        chain: this.chain,
+        pendingTransactions: this.pendingTransactions,
+        miningReward: this.miningReward
+      }, null, 2);
+      fs.writeFileSync(this.storagePath, data);
+    } catch (err) {
+      console.error('Failed to save blockchain to disk:', err);
+    }
+  }
+
+  private loadFromDisk(): void {
+    if (!this.storagePath || !fs.existsSync(this.storagePath)) return;
+    try {
+      const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+      
+      // Hydrate transactions back into Transaction objects
+      this.chain = data.chain.map((block: any) => {
+        const hydratedBlock = Object.assign(new Block(0, 0, []), block);
+        hydratedBlock.transactions = block.transactions.map((tx: any) => 
+          Object.assign(new Transaction('', '', 0), tx)
+        );
+        return hydratedBlock;
+      });
+
+      this.pendingTransactions = data.pendingTransactions.map((tx: any) => 
+        Object.assign(new Transaction('', '', 0), tx)
+      );
+
+      this.miningReward = data.miningReward;
+      console.log(`Successfully loaded blockchain from disk (${this.chain.length} blocks)`);
+    } catch (err) {
+      console.error('Failed to load blockchain from disk:', err);
+    }
   }
 
   /**
@@ -40,6 +87,7 @@ export class Blockchain {
     block.mineBlock(this.difficulty);
     this.chain.push(block);
     console.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
+    this.saveToDisk();
 
     // Reset pending transactions with the mining reward
     this.pendingTransactions = [
@@ -79,6 +127,7 @@ export class Blockchain {
     }
 
     this.pendingTransactions.push(transaction);
+    this.saveToDisk();
   }
 
   /**
@@ -156,6 +205,7 @@ export class Blockchain {
 
     console.log('Replacing blockchain with the longer chain from peer.');
     this.chain = newChain;
+    this.saveToDisk();
     return true;
   }
 

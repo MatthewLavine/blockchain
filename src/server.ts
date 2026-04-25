@@ -14,6 +14,7 @@ app.use(express.json());
 
 // Initialize our blockchain
 let myCoin = new Blockchain();
+myCoin.setStoragePath(port); // Enable disk persistence
 const p2pServer = new P2PServer(myCoin);
 
 // Auto-connect to seed node if provided
@@ -68,7 +69,7 @@ app.post('/addPeer', (req, res) => {
 app.post('/transaction', (req, res) => {
   try {
     const { fromAddress, toAddress, amount, signature } = req.body;
-    
+
     // Reconstruct the transaction object
     const tx = new Transaction(fromAddress, toAddress, amount);
     tx.signature = signature;
@@ -76,7 +77,7 @@ app.post('/transaction', (req, res) => {
     // The createTransaction method internally checks tx.isValid()
     myCoin.createTransaction(tx);
     p2pServer.broadcastTransaction(tx);
-    
+
     res.json({ message: 'Transaction successfully added to pending pool!' });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -97,7 +98,7 @@ app.post('/mine', (req, res) => {
   try {
     myCoin.minePendingTransactions(rewardAddress);
     p2pServer.broadcastLatest();
-    res.json({ 
+    res.json({
       message: 'Block successfully mined!',
       latestBlock: myCoin.getLatestBlock()
     });
