@@ -157,22 +157,20 @@ export class P2PServer {
 
         // If the received block is newer than what we have
         if (latestBlockReceived.index > latestBlockHeld.index) {
-            console.log(`Blockchain possibly out of sync. Peer index: ${latestBlockReceived.index}, local index: ${latestBlockHeld.index}`);
-
             // If the received block follows our current head, just add it
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
-                console.log('New block matches our current head. Appending to chain.');
+                console.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
                 this.blockchain.chain.push(latestBlockReceived);
                 this.broadcastLatest();
-            }
+            } 
             // If we received exactly one block that doesn't follow ours, we need to request the whole chain
             else if (receivedBlocks.length === 1) {
-                console.log('We need to query the entire chain from our peer.');
+                console.log(`Out of sync. Requesting full chain from peer (Local: ${latestBlockHeld.index}, Peer: ${latestBlockReceived.index})`);
                 this.broadcast({ type: MessageType.QUERY_ALL });
-            }
+            } 
             // Otherwise, we've received a multi-block chain. Try to replace our local chain.
             else {
-                console.log('Received longer chain. Attempting to replace local chain.');
+                console.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
                 this.blockchain.replaceChain(receivedBlocks);
             }
         } else {
