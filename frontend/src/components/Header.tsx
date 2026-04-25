@@ -1,14 +1,20 @@
-import React from 'react';
-import { RefreshCcw, Sun, Moon } from 'lucide-react';
+import { RefreshCcw, Sun, Moon, Trash2 } from 'lucide-react';
 
 interface HeaderProps {
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
   fetchData: (silent?: boolean) => void;
+  resetChain: () => void;
   isLoading: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, isLoading }) => {
+export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, resetChain, isLoading }) => {
+  const handleReset = () => {
+    if (window.confirm('Are you sure you want to reset the entire blockchain? This cannot be undone.')) {
+      resetChain();
+    }
+  };
+
   return (
     <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
       <div style={{ minWidth: '300px' }}>
@@ -16,6 +22,15 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetch
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Secure, Transparent, Decentralized.</p>
       </div>
       <div style={{ display: 'flex', gap: '12px' }}>
+        <button
+          onClick={handleReset}
+          className="glass-card"
+          style={{ padding: '10px 16px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', color: '#ef4444' }}
+          title="Reset Blockchain"
+        >
+          <Trash2 size={18} />
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Reset</span>
+        </button>
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="glass-card"

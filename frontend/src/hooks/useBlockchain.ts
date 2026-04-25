@@ -107,6 +107,24 @@ export function useBlockchain() {
     }
   };
 
+  const resetChain = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:3000/reset', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      setSuccess(data.message);
+      await fetchData();
+    } catch (err) {
+      setError('Failed to reset blockchain.');
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setSuccess(null), 3000);
+    }
+  };
+
   return {
     walletAddress,
     balance,
@@ -118,6 +136,7 @@ export function useBlockchain() {
     success,
     fetchData,
     sendTransaction,
-    mineBlock
+    mineBlock,
+    resetChain
   };
 }

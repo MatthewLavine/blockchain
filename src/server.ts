@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize our blockchain
-const myCoin = new Blockchain();
+let myCoin = new Blockchain();
 
 /**
  * Returns the entire blockchain
@@ -34,6 +34,11 @@ app.get('/balance/:address', (req, res) => {
  */
 app.get('/pending', (req, res) => {
   res.json(myCoin.pendingTransactions);
+});
+
+app.post('/reset', (req, res) => {
+  myCoin = new Blockchain();
+  res.json({ message: 'Blockchain has been reset successfully.' });
 });
 
 /**

@@ -22,7 +22,8 @@ function App() {
     success,
     fetchData,
     sendTransaction,
-    mineBlock
+    mineBlock,
+    resetChain
   } = useBlockchain();
 
   useEffect(() => {
@@ -35,6 +36,7 @@ function App() {
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode} 
         fetchData={fetchData} 
+        resetChain={resetChain}
         isLoading={isLoading} 
       />
 
