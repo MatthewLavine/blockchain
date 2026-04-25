@@ -16,6 +16,13 @@ app.use(express.json());
 let myCoin = new Blockchain();
 const p2pServer = new P2PServer(myCoin);
 
+// Auto-connect to seed node if provided
+const seedNode = process.env.SEED_NODE;
+if (seedNode) {
+  console.log(`Connecting to seed node: ${seedNode}`);
+  p2pServer.connectToPeer(seedNode);
+}
+
 /**
  * Returns the entire blockchain
  */
