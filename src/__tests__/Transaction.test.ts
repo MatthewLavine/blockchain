@@ -83,4 +83,26 @@ describe('Transaction', () => {
     });
     expect(tx.timestamp).toBeGreaterThanOrEqual(before);
   });
+
+  // ── Signing Security ──────────────────────────────────────────────────────
+
+  test('signTransaction() throws when signing with a key that does not match fromAddress', () => {
+    const impersonator = ec.genKeyPair();
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    // impersonator tries to sign a transaction from sender's address
+    expect(() => tx.signTransaction(impersonator)).toThrow('You cannot sign transactions for other wallets!');
+  });
+
+  test('calculateHash() changes when amount changes', () => {
+    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx2 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 999);
+    expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
+  });
+
+  test('calculateHash() changes when recipient changes', () => {
+    const other = ec.genKeyPair();
+    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx2 = new Transaction(sender.getPublic('hex'), other.getPublic('hex'), 50);
+    expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
+  });
 });

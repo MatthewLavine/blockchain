@@ -100,4 +100,60 @@ describe('Blockchain', () => {
     (chain.chain[1] as any).hash = 'tampered';
     expect(chain.isChainValid()).toBe(false);
   });
+
+  // ── Mining Flow ───────────────────────────────────────────────────────────
+
+  test('minePendingTransactions() adds a new block to the chain', () => {
+    expect(chain.chain.length).toBe(1); // genesis only
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    expect(chain.chain.length).toBe(2);
+  });
+
+  test('minePendingTransactions() replaces mempool with a single mining reward tx', () => {
+    // Add a user transaction first
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    chain.minePendingTransactions(alice.getPublic('hex')); // settle reward into a block
+    const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
+
+    const userTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    userTx.signTransaction(alice);
+    chain.createTransaction(userTx);
+
+    // Mine — should clear the user tx and leave only the reward tx
+    chain.minePendingTransactions(bob.getPublic('hex'));
+    expect(chain.pendingTransactions).toHaveLength(1);
+    expect(chain.pendingTransactions[0].fromAddress).toBeNull(); // reward tx has no sender
+    expect(chain.pendingTransactions[0].toAddress).toBe(bob.getPublic('hex'));
+  });
+
+  test('getLatestBlock() returns the most recently added block', () => {
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const latest = chain.getLatestBlock();
+    expect(latest.index).toBe(chain.chain.length - 1);
+    expect(latest).toBe(chain.chain[chain.chain.length - 1]);
+  });
+
+  test('initial miningReward matches NETWORK_CONSTANTS', () => {
+    const { NETWORK_CONSTANTS } = require('../Constants');
+    expect(chain.miningReward).toBe(NETWORK_CONSTANTS.INITIAL_MINING_REWARD);
+  });
+
+  // ── Double-Spend Prevention ───────────────────────────────────────────────
+
+  test('createTransaction() prevents double-spend using pending balance', () => {
+    // Fund alice: mine twice so reward is confirmed in the chain
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
+
+    // First tx spends the full balance — should succeed
+    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    tx1.signTransaction(alice);
+    expect(() => chain.createTransaction(tx1)).not.toThrow();
+
+    // Second tx tries to spend the same balance before it's mined — should fail
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    tx2.signTransaction(alice);
+    expect(() => chain.createTransaction(tx2)).toThrow('Not enough balance');
+  });
 });
