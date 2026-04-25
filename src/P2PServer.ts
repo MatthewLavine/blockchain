@@ -34,9 +34,9 @@ export class P2PServer {
     /**
      * Start the P2P server to listen for incoming connections from peers
      */
-    public listen(port: number): void {
+    public listen(port: number, host: string = 'localhost'): void {
         const server = new WebSocket.Server({ port });
-        this.myAddress = `ws://localhost:${port}`;
+        this.myAddress = `ws://${host}:${port}`;
 
         server.on('connection', (socket) => {
             this.initConnection(socket);
@@ -255,10 +255,8 @@ export class P2PServer {
     }
 
     public getPeers(): string[] {
-        const activeAddresses = this.sockets
-            .map(s => (s as any).peerAddress)
+        return this.sockets
+            .map(s => (s as any).peerAddress || (s.url ? s.url : 'Unknown Peer'))
             .filter(addr => addr && addr !== this.myAddress);
-
-        return Array.from(new Set(activeAddresses));
     }
 }

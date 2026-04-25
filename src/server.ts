@@ -9,6 +9,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 Logger.initialize(port);
 const p2pPort = process.env.P2P_PORT || 6000;
+const p2pHost = process.env.P2P_HOST || 'localhost';
 
 // Middleware
 app.use(cors());
@@ -31,6 +32,13 @@ if (seedNode) {
  */
 app.get('/blocks', (req, res) => {
   res.json(myCoin.chain);
+});
+
+/**
+ * Health check endpoint
+ */
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'up', timestamp: new Date().toISOString() });
 });
 
 /**
@@ -111,5 +119,5 @@ app.post('/mine', (req, res) => {
 
 app.listen(port, () => {
   Logger.log(`Blockchain Node listening at http://localhost:${port}`);
-  p2pServer.listen(Number(p2pPort));
+  p2pServer.listen(Number(p2pPort), p2pHost);
 });
