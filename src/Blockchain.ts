@@ -93,9 +93,8 @@ export class Blockchain {
     const block = new Block(this.chain.length, Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
 
     block.mineBlock(this.difficulty);
-    this.chain.push(block);
     console.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
-    this.saveToDisk();
+    this.addBlock(block);
 
     // Reset pending transactions with the mining reward
     this.pendingTransactions = [
@@ -106,6 +105,15 @@ export class Blockchain {
     if (this.chain.length % 100 === 0) {
       this.miningReward = this.miningReward / 2;
     }
+  }
+
+  /**
+   * Directly adds a block to the chain and saves it to disk.
+   * Useful for syncing blocks received from peers.
+   */
+  public addBlock(newBlock: Block): void {
+    this.chain.push(newBlock);
+    this.saveToDisk();
   }
 
   /**

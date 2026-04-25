@@ -160,7 +160,7 @@ export class P2PServer {
             // If the received block follows our current head, just add it
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
                 console.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
-                this.blockchain.chain.push(latestBlockReceived);
+                this.blockchain.addBlock(latestBlockReceived);
                 this.broadcastLatest();
             } 
             // If we received exactly one block that doesn't follow ours, we need to request the whole chain
