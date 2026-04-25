@@ -62,8 +62,9 @@
 - [x] **P2P Message Handlers**: Decompose the massive `handleMessage` switch into discrete, named handler methods.
 - [x] **Type Enforcement**: Define TypeScript interfaces for all P2P message payloads (removing `any`).
 - [x] **Context-Aware Logger**: Create a utility to prefix logs with node identity (e.g. `[Node 3000]`).
+- [x] **Service Extraction**: Decouple `Mempool`, `ChainValidator`, and `Constants` into dedicated modules.
 
-## Phase 11: Network Evolution
+## Phase 11: Network Evolution (Next Up!)
 - [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
 - [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
 - [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
