@@ -116,7 +116,7 @@ export class Blockchain {
    * Directly adds a block to the chain and saves it to disk.
    * Useful for syncing blocks received from peers.
    */
-  public addBlock(newBlock: any): void {
+  public addBlock(newBlock: Record<string, any> | Block): void {
     const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
     this.chain.push(hydratedBlock);
     this.saveToDisk();
@@ -212,7 +212,7 @@ export class Blockchain {
    * Replaces the current chain with a new one, provided the new chain is longer and valid.
    * This is the core of the "Longest Chain Rule" in decentralization.
    */
-  public replaceChain(newChain: any[]): boolean {
+  public replaceChain(newChain: (Record<string, any> | Block)[]): boolean {
     if (newChain.length <= this.chain.length) {
       console.log('Received chain is not longer than current chain. Ignoring.');
       return false;

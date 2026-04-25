@@ -15,6 +15,11 @@ enum MessageType {
     RESET_CHAIN = 7
 }
 
+interface P2PMessage {
+    type: MessageType;
+    data?: any; // We will further refine this in the handlers
+}
+
 export class P2PServer {
     private sockets: WebSocket[] = [];
     private peerUrls: Set<string> = new Set();
@@ -81,7 +86,7 @@ export class P2PServer {
         }
     }
 
-    private handleMessage(socket: WebSocket, message: any): void {
+    private handleMessage(socket: WebSocket, message: P2PMessage): void {
         switch (message.type) {
             case MessageType.QUERY_LATEST:
                 this.handleQueryLatest(socket);
@@ -194,7 +199,7 @@ export class P2PServer {
         }
     }
 
-    private handleTransactionBroadcast(data: any): void {
+    private handleTransactionBroadcast(data: Record<string, any>): void {
         try {
             const tx = Transaction.fromObject(data);
             this.blockchain.createTransaction(tx);
@@ -208,7 +213,7 @@ export class P2PServer {
     /**
      * Broadcast a message to ALL connected peers
      */
-    public broadcast(message: any): void {
+    public broadcast(message: P2PMessage): void {
         this.sockets.forEach(socket => this.write(socket, message));
     }
 
@@ -230,7 +235,7 @@ export class P2PServer {
         this.broadcast({ type: MessageType.RESET_CHAIN });
     }
 
-    private write(socket: WebSocket, message: any): void {
+    private write(socket: WebSocket, message: P2PMessage): void {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(message));
         }

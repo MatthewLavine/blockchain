@@ -53,7 +53,7 @@ export class Block {
    * Static factory to create a Block instance from a raw object.
    * Recursively hydrates internal Transactions as well.
    */
-  static fromObject(obj: any): Block {
+  static fromObject(obj: Record<string, any>): Block {
     const transactions = obj.transactions.map((tx: any) => Transaction.fromObject(tx));
     const block = new Block(obj.index, obj.timestamp, transactions, obj.previousHash);
     block.nonce = obj.nonce;

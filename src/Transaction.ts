@@ -82,7 +82,7 @@ export class Transaction {
    * Static factory to create a Transaction instance from a raw object.
    * Useful for hydrating data from JSON or P2P messages.
    */
-  static fromObject(obj: any): Transaction {
+  static fromObject(obj: Record<string, any>): Transaction {
     const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount);
     tx.signature = obj.signature;
     return tx;
