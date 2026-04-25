@@ -48,7 +48,7 @@ app.get('/pending', (req, res) => {
 });
 
 app.post('/reset', (req, res) => {
-  myCoin = new Blockchain();
+  myCoin.reset();
   res.json({ message: 'Blockchain has been reset successfully.' });
 });
 

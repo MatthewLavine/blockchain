@@ -62,12 +62,23 @@ export class Blockchain {
         console.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
         this.chain = [this.createGenesisBlock()];
         this.pendingTransactions = [];
+        this.saveToDisk(); // Overwrite the corrupt file with a fresh start
       } else {
         console.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
       }
     } catch (err) {
       console.error('Failed to load blockchain from disk:', err);
     }
+  }
+
+  /**
+   * Resets the chain to the Genesis block and clears all transactions.
+   * This is immediately persisted to disk.
+   */
+  public reset(): void {
+    this.chain = [this.createGenesisBlock()];
+    this.pendingTransactions = [];
+    this.saveToDisk();
   }
 
   /**
