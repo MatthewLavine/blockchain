@@ -41,14 +41,8 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
 body {
+  min-height: 100vh;
   background: var(--body-gradient);
   background-attachment: fixed;
   transition: all 0.3s ease;
@@ -73,8 +67,8 @@ button {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 20px;
+  padding: 24px;
   box-shadow: var(--shadow-xl);
   transition: all 0.3s ease;
 }

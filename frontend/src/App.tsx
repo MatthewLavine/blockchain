@@ -30,7 +30,7 @@ function App() {
   }, [isDarkMode]);
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: '20px', boxSizing: 'border-box' }}>
+    <div className="container" style={{ maxWidth: '1600px', margin: '0 auto', padding: '40px 20px' }}>
       <Header 
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode} 
@@ -38,55 +38,47 @@ function App() {
         isLoading={isLoading} 
       />
 
-      {/* Notifications - Fixed corner overlay */}
-      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, width: '350px' }}>
+      {/* Notifications - Toast Overlays */}
+      <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, width: '350px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {error && (
-          <div className="glass-card" style={{ marginBottom: '10px', border: '1px solid #ef444455', color: '#f87171', display: 'flex', gap: '12px', alignItems: 'center', padding: '12px' }}>
-            <AlertCircle size={18} />
-            <p style={{ fontSize: '0.8125rem' }}>{error}</p>
+          <div className="glass-card" style={{ border: '1px solid #ef444455', color: '#f87171', display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.5)' }}>
+            <AlertCircle size={20} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Error</div>
+              <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{error}</p>
+            </div>
           </div>
         )}
         {success && (
-          <div className="glass-card" style={{ border: '1px solid #10b98155', color: '#34d399', display: 'flex', gap: '12px', alignItems: 'center', padding: '12px' }}>
-            <CheckCircle2 size={18} />
-            <p style={{ fontSize: '0.8125rem' }}>{success}</p>
+          <div className="glass-card" style={{ border: '1px solid #10b98155', color: '#34d399', display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.5)' }}>
+            <CheckCircle2 size={20} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Success</div>
+              <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{success}</p>
+            </div>
           </div>
         )}
       </div>
 
-      <main style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '300px 1fr 320px', 
-        gap: '20px', 
-        flex: 1, 
-        minHeight: 0 // Crucial for flex nested scrolling
-      }}>
-        {/* Column 1: Control Center */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 0 }}>
-          <div style={{ flexShrink: 0 }}>
-            <WalletCard address={walletAddress} balance={balance} />
-          </div>
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
-            <MiningCard mineBlock={mineBlock} isMining={isMining} />
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 350px', gap: '20px', alignItems: 'start' }}>
+        {/* Column 1: My Wallet & Actions */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <WalletCard address={walletAddress} balance={balance} />
+          <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
+          <MiningCard mineBlock={mineBlock} isMining={isMining} />
         </section>
 
-        {/* Column 2: Ledger Explorer */}
-        <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        {/* Column 2: Blockchain Ledger */}
+        <section>
           <BlockExplorer blocks={blocks} />
         </section>
 
-        {/* Column 3: Activity Feed */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 0 }}>
-          <div style={{ flex: '0 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <Mempool transactions={pendingTransactions} />
-          </div>
-          <div style={{ flex: '1 1 0%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <ActivityList blocks={blocks} walletAddress={walletAddress} />
-          </div>
+        {/* Column 3: Network Feeds */}
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <Mempool transactions={pendingTransactions} />
+          <ActivityList blocks={blocks} walletAddress={walletAddress} />
         </section>
-      </main>
+      </div>
     </div>
   );
 }

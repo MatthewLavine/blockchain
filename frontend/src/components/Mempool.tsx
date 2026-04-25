@@ -8,26 +8,26 @@ interface MempoolProps {
 
 export const Mempool: React.FC<MempoolProps> = ({ transactions }) => {
   return (
-    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, maxHeight: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexShrink: 0 }}>
-        <div style={{ padding: '8px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}>
-          <Layers size={20} />
+    <div className="glass-card">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
+          <Layers size={24} />
         </div>
-        <h2 style={{ fontSize: '1.1rem' }}>Mempool</h2>
+        <h2 style={{ fontSize: '1.25rem' }}>Mempool (Pending)</h2>
         <span style={{ 
           marginLeft: 'auto', 
           background: 'rgba(99, 102, 241, 0.1)', 
           color: 'var(--accent-primary)', 
-          padding: '2px 10px', 
+          padding: '4px 12px', 
           borderRadius: '20px', 
-          fontSize: '0.7rem', 
+          fontSize: '0.75rem', 
           fontWeight: 600 
         }}>
-          {transactions.length}
+          {transactions.length} Transactions
         </span>
       </div>
 
-      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
             No pending transactions. All clear!

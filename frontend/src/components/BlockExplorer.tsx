@@ -8,15 +8,15 @@ interface BlockExplorerProps {
 
 export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks }) => {
   return (
-    <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexShrink: 0 }}>
-        <div style={{ padding: '8px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '8px', color: 'var(--accent-primary)' }}>
-          <Database size={18} />
+    <section className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
+          <Database size={24} />
         </div>
-        <h2 style={{ fontSize: '1.1rem' }}>Blockchain Ledger</h2>
+        <h2 style={{ fontSize: '1.25rem' }}>Blockchain Ledger</h2>
       </div>
 
-      <div style={{ overflowY: 'auto', overflowX: 'auto', flex: 1, minHeight: 0 }}>
+      <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>
