@@ -3,9 +3,11 @@ import cors from 'cors';
 import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
 import { P2PServer } from './P2PServer';
+import { Logger } from './Logger';
 
 const app = express();
 const port = process.env.PORT || 3000;
+Logger.initialize(port);
 const p2pPort = process.env.P2P_PORT || 6000;
 
 // Middleware

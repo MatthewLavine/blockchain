@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
 import { Block } from './Block';
+import { Logger } from './Logger';
 
 // Define message types to avoid string literal errors
 enum MessageType {
@@ -41,7 +42,7 @@ export class P2PServer {
             this.initConnection(socket);
         });
 
-        console.log(`Listening for P2P connections on port: ${port}`);
+        Logger.log(`Listening for P2P connections on port: ${port}`);
     }
 
     /**
@@ -56,7 +57,7 @@ export class P2PServer {
             this.initConnection(socket);
         });
         socket.on('error', (err) => {
-            console.log('P2P Connection failed:', err.message);
+            Logger.log('P2P Connection failed:', err.message);
             this.peerUrls.delete(peerUrl);
         });
     }
@@ -70,7 +71,7 @@ export class P2PServer {
                 const message = JSON.parse(data);
                 this.handleMessage(socket, message);
             } catch (e) {
-                console.error('Failed to parse P2P message', e);
+                Logger.error('Failed to parse P2P message', e);
             }
         });
 
@@ -162,11 +163,11 @@ export class P2PServer {
 
         // Tag the socket with the peer address for deduplication/tracking
         (socket as any).peerAddress = peerAddress;
-        console.log(`Peer connected: ${peerAddress}. Total unique peers: ${this.getPeers().length}`);
+        Logger.log(`Peer connected: ${peerAddress}. Total unique peers: ${this.getPeers().length}`);
     }
 
     private handleResetChain(): void {
-        console.log('Received RESET_CHAIN signal. Wiping local state.');
+        Logger.log('Received RESET_CHAIN signal. Wiping local state.');
         this.blockchain.reset();
     }
 
@@ -186,14 +187,14 @@ export class P2PServer {
 
         if (latestBlockReceived.index > latestBlockHeld.index) {
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
-                console.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
+                Logger.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
                 this.blockchain.addBlock(latestBlockReceived);
                 this.broadcastLatest();
             } else if (receivedBlocks.length === 1) {
-                console.log(`Out of sync. Requesting full chain from peer (Local: ${latestBlockHeld.index}, Peer: ${latestBlockReceived.index})`);
+                Logger.log(`Out of sync. Requesting full chain from peer (Local: ${latestBlockHeld.index}, Peer: ${latestBlockReceived.index})`);
                 this.broadcast({ type: MessageType.QUERY_ALL });
             } else {
-                console.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
+                Logger.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
                 this.blockchain.replaceChain(receivedBlocks);
             }
         }
@@ -248,7 +249,7 @@ export class P2PServer {
             const remaining = this.sockets.some(s => (s as any).peerAddress === address);
             if (!remaining) {
                 this.peerUrls.delete(address);
-                console.log(`Peer disconnected: ${address}. Total unique peers: ${this.getPeers().length}`);
+                Logger.log(`Peer disconnected: ${address}. Total unique peers: ${this.getPeers().length}`);
             }
         }
     }

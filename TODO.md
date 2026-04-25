@@ -60,7 +60,7 @@
 ## Phase 10: Code Refactoring & Type Safety (Current)
 - [x] **Unified Serialization**: Implement static `.fromJSON()` factories for `Block` and `Transaction` classes.
 - [x] **P2P Message Handlers**: Decompose the massive `handleMessage` switch into discrete, named handler methods.
-- [ ] **Type Enforcement**: Define TypeScript interfaces for all P2P message payloads (removing `any`).
+- [x] **Type Enforcement**: Define TypeScript interfaces for all P2P message payloads (removing `any`).
 - [ ] **Context-Aware Logger**: Create a utility to prefix logs with node identity (e.g. `[Node 3000]`).
 
 ## Phase 11: Network Evolution

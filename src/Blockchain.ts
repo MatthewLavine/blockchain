@@ -1,5 +1,6 @@
 import { Block } from './Block';
 import { Transaction } from './Transaction';
+import { Logger } from './Logger';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -33,7 +34,7 @@ export class Blockchain {
       }, null, 2);
       fs.writeFileSync(this.storagePath, data);
     } catch (err) {
-      console.error('Failed to save blockchain to disk:', err);
+      Logger.error('Failed to save blockchain to disk:', err);
     }
   }
 
@@ -53,15 +54,15 @@ export class Blockchain {
 
       // Validate the loaded chain
       if (!this.isChainValid()) {
-        console.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
+        Logger.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
         this.chain = [this.createGenesisBlock()];
         this.pendingTransactions = [];
         this.saveToDisk(); // Overwrite the corrupt file with a fresh start
       } else {
-        console.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
+        Logger.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
       }
     } catch (err) {
-      console.error('Failed to load blockchain from disk:', err);
+      Logger.error('Failed to load blockchain from disk:', err);
     }
   }
 
@@ -98,7 +99,7 @@ export class Blockchain {
     const block = new Block(this.chain.length, Date.now(), this.pendingTransactions, this.getLatestBlock().hash);
 
     block.mineBlock(this.difficulty);
-    console.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
+    Logger.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
     this.addBlock(block);
 
     // Reset pending transactions with the mining reward
@@ -214,7 +215,7 @@ export class Blockchain {
    */
   public replaceChain(newChain: (Record<string, any> | Block)[]): boolean {
     if (newChain.length <= this.chain.length) {
-      console.log('Received chain is not longer than current chain. Ignoring.');
+      Logger.log('Received chain is not longer than current chain. Ignoring.');
       return false;
     }
 
@@ -223,11 +224,11 @@ export class Blockchain {
 
     // Verify the new chain is valid before accepting it
     if (!this.isValidChain(hydratedChain)) {
-      console.log('Received chain is invalid. Ignoring.');
+      Logger.log('Received chain is invalid. Ignoring.');
       return false;
     }
 
-    console.log('Replacing blockchain with the longer chain from peer.');
+    Logger.log('Replacing blockchain with the longer chain from peer.');
     this.chain = hydratedChain;
     this.saveToDisk();
     return true;
