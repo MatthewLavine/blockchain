@@ -41,7 +41,22 @@ export const WalletCard: React.FC<WalletCardProps> = ({ address, balance }) => {
             <span>{copied ? 'Copied!' : 'Copy'}</span>
           </button>
         </div>
-        <div className="glass-card" style={{ padding: '8px', fontSize: '0.7rem', overflowWrap: 'anywhere', background: 'rgba(0,0,0,0.2)', border: '1px dashed var(--glass-border)' }}>
+        <div 
+          onClick={handleCopy}
+          className="glass-card" 
+          style={{ 
+            padding: '8px', 
+            fontSize: '0.7rem', 
+            overflowWrap: 'anywhere', 
+            background: 'rgba(0,0,0,0.2)', 
+            border: '1px dashed var(--glass-border)',
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          title="Click to copy"
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+        >
           {address || 'Generating...'}
         </div>
       </div>
