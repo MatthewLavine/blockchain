@@ -7,12 +7,17 @@ enum MessageType {
     QUERY_LATEST = 0,
     QUERY_ALL = 1,
     RESPONSE_BLOCKCHAIN = 2,
-    BROADCAST_TRANSACTION = 3
+    BROADCAST_TRANSACTION = 3,
+    QUERY_PEERS = 4,
+    RESPONSE_PEERS = 5,
+    ANNOUNCE_SELF = 6
 }
 
 export class P2PServer {
     private sockets: WebSocket[] = [];
+    private peerUrls: Set<string> = new Set();
     private blockchain: Blockchain;
+    private myAddress: string | null = null;
 
     constructor(blockchain: Blockchain) {
         this.blockchain = blockchain;
@@ -23,6 +28,7 @@ export class P2PServer {
      */
     public listen(port: number): void {
         const server = new WebSocket.Server({ port });
+        this.myAddress = `ws://localhost:${port}`;
         
         server.on('connection', (socket) => {
             console.log(`P2P Connection established on port ${port}`);
@@ -36,9 +42,17 @@ export class P2PServer {
      * Connect to a specific peer URL (e.g. ws://localhost:6001)
      */
     public connectToPeer(peerUrl: string): void {
+        if (this.peerUrls.has(peerUrl)) return; // Already connecting/connected
+        
         const socket = new WebSocket(peerUrl);
-        socket.on('open', () => this.initConnection(socket));
-        socket.on('error', (err) => console.log('P2P Connection failed:', err.message));
+        socket.on('open', () => {
+            this.peerUrls.add(peerUrl);
+            this.initConnection(socket);
+        });
+        socket.on('error', (err) => {
+            console.log('P2P Connection failed:', err.message);
+            this.peerUrls.delete(peerUrl);
+        });
     }
 
     private initConnection(socket: WebSocket): void {
@@ -47,16 +61,27 @@ export class P2PServer {
 
         // Handle incoming messages
         socket.on('message', (data: string) => {
-            const message = JSON.parse(data);
-            this.handleMessage(socket, message);
+            try {
+                const message = JSON.parse(data);
+                this.handleMessage(socket, message);
+            } catch (e) {
+                console.error('Failed to parse P2P message', e);
+            }
         });
 
         // Clean up on disconnect
         socket.on('close', () => this.removeSocket(socket));
         socket.on('error', () => this.removeSocket(socket));
 
-        // When we first connect, ask for the latest block
+        // When we first connect, perform the handshake:
+        // 1. Ask for latest block
+        // 2. Ask for their peer list (Gossip)
+        // 3. Tell them who we are (if we know)
         this.write(socket, { type: MessageType.QUERY_LATEST });
+        this.write(socket, { type: MessageType.QUERY_PEERS });
+        if (this.myAddress) {
+            this.write(socket, { type: MessageType.ANNOUNCE_SELF, data: this.myAddress });
+        }
     }
 
     private handleMessage(socket: WebSocket, message: any): void {
@@ -82,7 +107,39 @@ export class P2PServer {
             case MessageType.BROADCAST_TRANSACTION:
                 this.handleTransactionBroadcast(message.data);
                 break;
+
+            case MessageType.QUERY_PEERS:
+                this.write(socket, {
+                    type: MessageType.RESPONSE_PEERS,
+                    data: Array.from(this.peerUrls)
+                });
+                break;
+
+            case MessageType.RESPONSE_PEERS:
+                this.handlePeerListResponse(message.data);
+                break;
+
+            case MessageType.ANNOUNCE_SELF:
+                if (message.data && message.data !== this.myAddress) {
+                    if (!this.peerUrls.has(message.data)) {
+                        console.log(`Node announced itself: ${message.data}`);
+                        this.peerUrls.add(message.data);
+                        // Share this new node with everyone else!
+                        this.broadcast({ type: MessageType.RESPONSE_PEERS, data: [message.data] });
+                    }
+                    
+                    // Tag the socket with the peer address for deduplication/tracking
+                    (socket as any).peerAddress = message.data;
+                }
+                break;
         }
+    }
+
+    private handlePeerListResponse(receivedPeerUrls: string[]): void {
+        receivedPeerUrls.forEach(url => {
+            console.log(`Discovered new peer via gossip: ${url}`);
+            this.connectToPeer(url);
+        });
     }
 
     private handleBlockchainResponse(receivedBlocks: any[]): void {
@@ -156,9 +213,20 @@ export class P2PServer {
 
     private removeSocket(socket: WebSocket): void {
         this.sockets = this.sockets.filter(s => s !== socket);
+        const address = (socket as any).peerAddress;
+        if (address) {
+            // Check if we still have ANY socket for this address
+            const remaining = this.sockets.some(s => (s as any).peerAddress === address);
+            if (!remaining) this.peerUrls.delete(address);
+        }
     }
 
     public getPeers(): string[] {
-        return this.sockets.map(s => (s as any)._url || 'Unknown Peer');
+        // Return unique peer addresses from both the tracked Set and the active sockets
+        const activeAddresses = this.sockets
+            .map(s => (s as any).peerAddress)
+            .filter(addr => addr && addr !== this.myAddress);
+        
+        return Array.from(new Set(activeAddresses));
     }
 }

@@ -86,7 +86,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
             </div>
           </div>
 
-          {peers.length === 0 ? (
+          {Array.from(new Set(peers)).length === 0 ? (
           <div style={{ 
             padding: '20px', 
             textAlign: 'center', 
@@ -100,7 +100,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
             <p>No peers connected.<br/>Start a second node to test P2P!</p>
           </div>
         ) : (
-          peers.map((peer, i) => (
+          Array.from(new Set(peers)).map((peer, i) => (
             <div key={i} className="glass-card" style={{ 
               padding: '12px', 
               background: 'rgba(255,255,255,0.02)', 
