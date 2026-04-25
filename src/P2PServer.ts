@@ -10,7 +10,8 @@ enum MessageType {
     BROADCAST_TRANSACTION = 3,
     QUERY_PEERS = 4,
     RESPONSE_PEERS = 5,
-    ANNOUNCE_SELF = 6
+    ANNOUNCE_SELF = 6,
+    RESET_CHAIN = 7
 }
 
 export class P2PServer {
@@ -138,6 +139,11 @@ export class P2PServer {
                     console.log(`Peer connected: ${message.data}. Total unique peers: ${this.getPeers().length}`);
                 }
                 break;
+
+            case MessageType.RESET_CHAIN:
+                console.log('Received RESET_CHAIN signal. Wiping local state.');
+                this.blockchain.reset();
+                break;
         }
     }
 
@@ -208,6 +214,10 @@ export class P2PServer {
             type: MessageType.BROADCAST_TRANSACTION,
             data: transaction
         });
+    }
+
+    public broadcastReset(): void {
+        this.broadcast({ type: MessageType.RESET_CHAIN });
     }
 
     private write(socket: WebSocket, message: any): void {

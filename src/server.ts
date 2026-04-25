@@ -49,6 +49,7 @@ app.get('/pending', (req, res) => {
 
 app.post('/reset', (req, res) => {
   myCoin.reset();
+  p2pServer.broadcastReset();
   res.json({ message: 'Blockchain has been reset successfully.' });
 });
 
