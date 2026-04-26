@@ -13,7 +13,9 @@ enum MessageType {
     QUERY_PEERS = 4,
     RESPONSE_PEERS = 5,
     ANNOUNCE_SELF = 6,
-    RESET_CHAIN = 7
+    RESET_CHAIN = 7,
+    PING = 8,
+    PONG = 9
 }
 
 interface P2PMessage {
@@ -27,6 +29,7 @@ interface P2PMessage {
 interface P2PSocket extends WebSocket {
     peerAddress?: string;
     isOutgoing?: boolean;
+    missedPings?: number;
 }
 
 export class P2PServer {
@@ -35,6 +38,9 @@ export class P2PServer {
     private blockchain: Blockchain;
     private myAddress: string | null = null;
     private wss: WebSocket.Server | null = null;
+    private heartbeatInterval: NodeJS.Timeout | null = null;
+    private HEARTBEAT_DELAY = 5000; // 5 seconds
+    private MAX_MISSED_PINGS = 3;
 
     constructor(blockchain: Blockchain) {
         this.blockchain = blockchain;
@@ -50,6 +56,8 @@ export class P2PServer {
         this.wss.on('connection', (socket) => {
             this.initConnection(socket);
         });
+
+        this.startHeartbeat();
 
         Logger.log(`Listening for P2P connections on port: ${port}`);
     }
@@ -75,6 +83,7 @@ export class P2PServer {
     }
 
     private initConnection(socket: P2PSocket): void {
+        socket.missedPings = 0;
         this.sockets.push(socket);
 
         // Handle incoming messages
@@ -134,6 +143,14 @@ export class P2PServer {
                 // SECURITY WARNING: This is unauthenticated and dangerous.
                 this.handleResetChain();
                 break;
+
+            case MessageType.PING:
+                this.handlePing(socket);
+                break;
+
+            case MessageType.PONG:
+                this.handlePong(socket);
+                break;
         }
     }
 
@@ -156,6 +173,33 @@ export class P2PServer {
             type: MessageType.RESPONSE_PEERS,
             data: Array.from(this.peerUrls)
         });
+    }
+
+    private handlePing(socket: P2PSocket): void {
+        this.write(socket, { type: MessageType.PONG });
+    }
+
+    private handlePong(socket: P2PSocket): void {
+        socket.missedPings = 0;
+    }
+
+    private startHeartbeat(): void {
+        if (this.heartbeatInterval) return;
+
+        this.heartbeatInterval = setInterval(() => {
+            this.sockets.forEach((socket) => {
+                if (socket.missedPings !== undefined) {
+                    socket.missedPings++;
+                    if (socket.missedPings >= this.MAX_MISSED_PINGS) {
+                        Logger.log(`Peer ${socket.peerAddress} is unresponsive. Closing connection.`);
+                        socket.close();
+                        this.removeSocket(socket);
+                    } else {
+                        this.write(socket, { type: MessageType.PING });
+                    }
+                }
+            });
+        }, this.HEARTBEAT_DELAY);
     }
 
     private handleAnnounceSelf(socket: P2PSocket, peerAddress: string): void {
@@ -338,6 +382,11 @@ export class P2PServer {
         });
         this.sockets = [];
         this.peerUrls.clear();
+
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
 
         if (this.wss) {
             this.wss.close();
