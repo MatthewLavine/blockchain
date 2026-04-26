@@ -68,3 +68,10 @@
 - [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
 - [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
 - [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
+
+## Phase 12: Stability & Enterprise Hardening
+- [ ] **Atomic Persistence**: Use "Write-to-Temp then Rename" pattern for blockchain storage to prevent corruption on crash.
+- [ ] **P2P DOS Protection**: Enforce a Maximum Message Size (e.g., 2MB) on WebSockets to prevent memory exhaustion.
+- [ ] **P2P Connection Quotas**: Implement `MAX_PEERS` limits and random peer selection to prevent connection flooding.
+- [ ] **O(1) Balance Lookups**: Replace $O(N)$ chain scanning with a dedicated Balance Map or UTXO set for instant lookups.
+- [ ] **Mempool Expiry**: Automatically evict transactions from the mempool if they are older than 24 hours.
