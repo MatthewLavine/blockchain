@@ -57,6 +57,11 @@ app.get('/pending', (req, res) => {
   res.json(myCoin.pendingTransactions);
 });
 
+/**
+ * Resets the entire blockchain network.
+ * NOTE: This is intentionally unauthenticated and broadcasts to all peers to facilitate 
+ * rapid testing in development.
+ */
 app.post('/reset', (req, res) => {
   myCoin.reset();
   p2pServer.broadcastReset();

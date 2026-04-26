@@ -167,6 +167,12 @@ export class P2PServer {
         Logger.log(`Peer connected: ${peerAddress}. Total unique peers: ${this.getPeers().length}`);
     }
 
+    /**
+     * Resets the local blockchain. 
+     * NOTE: This is intentionally unauthenticated to facilitate rapid testing and 
+     * resetting of the network in development environments. 
+     * DO NOT USE THIS IN A PRODUCTION MAINNET!
+     */
     private handleResetChain(): void {
         Logger.log('Received RESET_CHAIN signal. Wiping local state.');
         this.blockchain.reset();
