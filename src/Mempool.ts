@@ -43,6 +43,15 @@ export class Mempool {
     }
 
     /**
+     * Removes specific transactions from the pool.
+     * Useful after mining to only remove the transactions that were included in the block.
+     */
+    public removeTransactions(transactionsToRemove: Transaction[]): void {
+        const signaturesToRemove = new Set(transactionsToRemove.map(tx => tx.signature));
+        this.transactions = this.transactions.filter(tx => !signaturesToRemove.has(tx.signature));
+    }
+
+    /**
      * Returns the number of transactions in the pool
      */
     public size(): number {

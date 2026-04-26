@@ -189,8 +189,12 @@ export class P2PServer {
         if (latestBlockReceived.index > latestBlockHeld.index) {
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
                 Logger.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
-                this.blockchain.addBlock(latestBlockReceived);
-                this.broadcastLatest();
+                try {
+                    this.blockchain.addBlock(latestBlockReceived);
+                    this.broadcastLatest();
+                } catch (err: any) {
+                    Logger.error(`Rejected invalid block from peer: ${err.message}`);
+                }
             } else if (receivedBlocks.length === 1) {
                 Logger.log(`Out of sync. Requesting full chain from peer (Local: ${latestBlockHeld.index}, Peer: ${latestBlockReceived.index})`);
                 this.broadcast({ type: MessageType.QUERY_ALL });

@@ -9,8 +9,9 @@ export const NETWORK_CONSTANTS = {
     MAX_BLOCK_TRANSACTIONS: 1000,
     GENESIS_DATE: "2026-01-01",
     GENESIS_PREVIOUS_HASH: "0",
-    calculateMiningReward: (chainLength: number): number => {
-        const halvings = Math.floor(chainLength / 100);
+    calculateMiningReward: (blockIndex: number): number => {
+        // The reward is halved every 100 blocks
+        const halvings = Math.floor(blockIndex / 100);
         // Using integer math for halving
         return Math.floor((100 * 1000000) / Math.pow(2, halvings));
     }

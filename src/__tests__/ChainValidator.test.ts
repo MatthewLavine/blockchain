@@ -17,7 +17,7 @@ function makeGenesisBlock(): Block {
 
 function mineBlock(index: number, txs: Transaction[], previousHash: string, timestamp?: number): Block {
   // Every block MUST have a mining reward now
-  const reward = NETWORK_CONSTANTS.calculateMiningReward(index - 1);
+  const reward = NETWORK_CONSTANTS.calculateMiningReward(index);
   const rewardTx = new Transaction(null, 'miner', reward);
   const block = new Block(index, timestamp || Date.now(), [...txs, rewardTx], previousHash);
   block.mineBlock(1); // difficulty=1 for speed
@@ -115,5 +115,18 @@ describe('ChainValidator', () => {
     const block1 = new Block(1, Date.now(), manyTxs, genesis.hash);
     block1.mineBlock(1);
     expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+  });
+
+  test('accepts reward halving at block 100', () => {
+    // block 99 should have INITIAL_MINING_REWARD (100)
+    // block 100 should have 50
+    const reward100 = NETWORK_CONSTANTS.calculateMiningReward(100);
+    expect(reward100).toBe(NETWORK_CONSTANTS.INITIAL_MINING_REWARD / 2);
+
+    const prevBlock = mineBlock(99, [], 'some-hash', 1000);
+    const block100 = mineBlock(100, [], prevBlock.hash, 2000);
+    
+    // Using index 100 should match the calculation
+    expect(ChainValidator.validateBlock(block100, prevBlock, reward100, 1, new Map())).toBe(true);
   });
 });

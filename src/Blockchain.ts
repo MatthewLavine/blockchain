@@ -121,7 +121,9 @@ export class Blockchain {
    */
   public minePendingTransactions(miningRewardAddress: string): void {
     // 1. Create the reward transaction for the miner
-    const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+    const nextBlockIndex = this.chain.length;
+    const currentReward = NETWORK_CONSTANTS.calculateMiningReward(nextBlockIndex);
+    const rewardTx = new Transaction(null, miningRewardAddress, currentReward);
     
     // 2. Combine with other pending transactions
     const transactionsToMine = [...this.mempool.getTransactions(), rewardTx];
@@ -135,10 +137,10 @@ export class Blockchain {
     // 4. Add the mined block to our chain
     this.addBlock(block);
 
-    // 5. Clear the mempool
-    this.mempool.clear();
+    // 5. Remove only the transactions that were mined into the block from the mempool
+    this.mempool.removeTransactions(transactionsToMine);
 
-    // 6. Update internal state for the NEXT mining operation (halving check)
+    // 6. Update internal state for the NEXT mining operation
     this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
   }
 
@@ -148,9 +150,21 @@ export class Blockchain {
    */
   public addBlock(newBlock: Record<string, any> | Block): void {
     const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
+    
+    // 1. Prepare validation context
+    const latestBlock = this.getLatestBlock();
+    const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(hydratedBlock.index);
+    const currentLedger = this.getLedger();
+
+    // 2. Perform full validation
+    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, currentLedger)) {
+      throw new Error(`Invalid block received: Block #${hydratedBlock.index} failed validation.`);
+    }
+
+    // 3. Add to chain if valid
     this.chain.push(hydratedBlock);
     
-    // Add these signatures to our known set
+    // Add these signatures to our known set for replay protection
     for (const tx of hydratedBlock.transactions) {
       if (tx.signature) this.knownSignatures.add(tx.signature);
     }
@@ -226,6 +240,25 @@ export class Blockchain {
     }
 
     return balance;
+  }
+
+  /**
+   * Builds the full ledger (balance map) based on all mined blocks.
+   * This is used for validating new blocks.
+   */
+  public getLedger(): Map<string, number> {
+    const ledger = new Map<string, number>();
+    for (const block of this.chain) {
+      for (const tx of block.transactions) {
+        if (tx.fromAddress !== null) {
+          const senderBalance = ledger.get(tx.fromAddress) || 0;
+          ledger.set(tx.fromAddress, senderBalance - tx.amount);
+        }
+        const recipientBalance = ledger.get(tx.toAddress) || 0;
+        ledger.set(tx.toAddress, recipientBalance + tx.amount);
+      }
+    }
+    return ledger;
   }
 
   /**

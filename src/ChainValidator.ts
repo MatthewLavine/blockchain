@@ -25,8 +25,8 @@ export class ChainValidator {
             const currentBlock = chain[i];
             const previousBlock = chain[i - 1];
 
-            // The reward for THIS block was determined by the chain length BEFORE it was added
-            const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(i - 1);
+            // The reward for THIS block is determined by its index
+            const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(currentBlock.index);
 
             if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty, ledger)) {
                 return false;

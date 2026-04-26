@@ -1,4 +1,5 @@
 import { Blockchain } from '../Blockchain';
+import { Block } from '../Block';
 import { Transaction } from '../Transaction';
 import { ec as EC } from 'elliptic';
 
@@ -119,6 +120,36 @@ describe('Blockchain', () => {
     // Mine — should clear the mempool
     chain.minePendingTransactions(bob.getPublic('hex'));
     expect(chain.pendingTransactions).toHaveLength(0);
+  });
+
+  test('minePendingTransactions() only removes transactions that were included in the block', () => {
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10);
+    tx1.signTransaction(alice);
+    chain.createTransaction(tx1);
+
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20);
+    tx2.signTransaction(alice);
+    chain.createTransaction(tx2);
+
+    // If we were to mine now, both would be included. 
+    // To test the "partial clear" logic, we can manually call removeTransactions 
+    // simulating a scenario where only tx1 was mined.
+    (chain as any).mempool.removeTransactions([tx1]);
+
+    expect(chain.pendingTransactions).toHaveLength(1);
+    expect(chain.pendingTransactions[0].signature).toBe(tx2.signature);
+  });
+
+  test('addBlock() rejects blocks with invalid transactions', () => {
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const badTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000000); // too much money
+    badTx.signTransaction(alice);
+    
+    const badBlock = new Block(chain.chain.length, Date.now(), [badTx], chain.getLatestBlock().hash);
+    badBlock.mineBlock(chain.difficulty);
+
+    expect(() => chain.addBlock(badBlock)).toThrow('failed validation');
   });
 
   test('getLatestBlock() returns the most recently added block', () => {
