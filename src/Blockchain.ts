@@ -13,6 +13,8 @@ export class Blockchain {
   private mempool: Mempool;
   public miningReward: number;
   private storagePath: string | null = null;
+  private knownSignatures: Set<string> = new Set();
+  private MAX_MEMPOOL_SIZE = 5000;
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
@@ -59,6 +61,14 @@ export class Blockchain {
 
       this.miningReward = data.miningReward;
 
+      // Rebuild the known signatures set for fast replay protection
+      this.knownSignatures.clear();
+      for (const block of this.chain) {
+        for (const tx of block.transactions) {
+          if (tx.signature) this.knownSignatures.add(tx.signature);
+        }
+      }
+
       // Validate the loaded chain
       if (!this.isChainValid()) {
         Logger.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
@@ -80,6 +90,7 @@ export class Blockchain {
   public reset(): void {
     this.chain = [this.createGenesisBlock()];
     this.mempool.clear();
+    this.knownSignatures.clear();
     this.saveToDisk();
   }
 
@@ -138,6 +149,12 @@ export class Blockchain {
   public addBlock(newBlock: Record<string, any> | Block): void {
     const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
     this.chain.push(hydratedBlock);
+    
+    // Add these signatures to our known set
+    for (const tx of hydratedBlock.transactions) {
+      if (tx.signature) this.knownSignatures.add(tx.signature);
+    }
+
     this.saveToDisk();
   }
 
@@ -156,6 +173,14 @@ export class Blockchain {
 
     if (this.mempool.containsTransaction(transaction)) {
       throw new Error('Duplicate transaction: This transaction is already in the pending pool.');
+    }
+
+    if (this.knownSignatures.has(transaction.signature)) {
+      throw new Error('Replay attack detected: This transaction has already been mined and included in the blockchain.');
+    }
+
+    if (this.mempool.getTransactions().length >= this.MAX_MEMPOOL_SIZE) {
+      throw new Error('Mempool is full. Please try again later.');
     }
 
     // Prevent sending more than the wallet has!
@@ -227,6 +252,15 @@ export class Blockchain {
     Logger.log('Replacing blockchain with the longer chain from peer.');
     this.chain = hydratedChain;
     this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
+
+    // Rebuild signature set for the new chain
+    this.knownSignatures.clear();
+    for (const block of this.chain) {
+      for (const tx of block.transactions) {
+        if (tx.signature) this.knownSignatures.add(tx.signature);
+      }
+    }
+
     this.saveToDisk();
     return true;
   }

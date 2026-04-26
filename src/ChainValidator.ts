@@ -18,6 +18,8 @@ export class ChainValidator {
         }
 
         // 2. Verify subsequent blocks
+        const knownSignatures: Set<string> = new Set();
+        
         for (let i = 1; i < chain.length; i++) {
             const currentBlock = chain[i];
             const previousBlock = chain[i - 1];
@@ -27,6 +29,16 @@ export class ChainValidator {
 
             if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty)) {
                 return false;
+            }
+
+            // Check for duplicate transactions across blocks
+            for (const tx of currentBlock.transactions) {
+                if (tx.signature) {
+                    if (knownSignatures.has(tx.signature)) {
+                        return false; // Duplicate transaction signature found in different blocks!
+                    }
+                    knownSignatures.add(tx.signature);
+                }
             }
         }
 
@@ -55,6 +67,20 @@ export class ChainValidator {
 
         // 4. Check if it points to the correct previous block
         if (block.previousHash !== previousBlock.hash) {
+            return false;
+        }
+
+        // 5. Verify timestamp bounds
+        // - Block time must be after previous block time
+        // - Block time must not be more than 2 hours in the future
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+        const currentTime = Date.now();
+        
+        if (block.timestamp <= previousBlock.timestamp) {
+            return false;
+        }
+        
+        if (block.timestamp > currentTime + TWO_HOURS_MS) {
             return false;
         }
 

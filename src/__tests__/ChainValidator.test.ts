@@ -15,11 +15,11 @@ function makeGenesisBlock(): Block {
   );
 }
 
-function mineBlock(index: number, txs: Transaction[], previousHash: string): Block {
+function mineBlock(index: number, txs: Transaction[], previousHash: string, timestamp?: number): Block {
   // Every block MUST have a mining reward now
   const reward = NETWORK_CONSTANTS.calculateMiningReward(index - 1);
   const rewardTx = new Transaction(null, 'miner', reward);
-  const block = new Block(index, Date.now(), [...txs, rewardTx], previousHash);
+  const block = new Block(index, timestamp || Date.now(), [...txs, rewardTx], previousHash);
   block.mineBlock(1); // difficulty=1 for speed
   return block;
 }
@@ -36,8 +36,8 @@ describe('ChainValidator', () => {
   });
 
   test('accepts a valid multi-block chain', () => {
-    const block1 = mineBlock(1, [], genesis.hash);
-    const block2 = mineBlock(2, [], block1.hash);
+    const block1 = mineBlock(1, [], genesis.hash, Date.now() + 100);
+    const block2 = mineBlock(2, [], block1.hash, Date.now() + 200);
     expect(ChainValidator.isChainValid([genesis, block1, block2], genesis, 1)).toBe(true);
   });
 
