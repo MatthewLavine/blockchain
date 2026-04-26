@@ -55,7 +55,16 @@ function App() {
       {/* Notifications - Toast Overlays */}
       <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000, width: '350px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {error && (
-          <div className="glass-card" style={{ border: '1px solid #ef444455', color: '#f87171', display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.5)' }}>
+          <div className="glass-card" style={{ 
+            border: '1px solid var(--accent-error)', 
+            color: 'var(--accent-error)', 
+            background: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+            display: 'flex', 
+            gap: '12px', 
+            alignItems: 'center', 
+            padding: '16px', 
+            boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)' 
+          }}>
             <AlertCircle size={20} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Error</div>
@@ -64,7 +73,16 @@ function App() {
           </div>
         )}
         {success && (
-          <div className="glass-card" style={{ border: '1px solid #10b98155', color: '#34d399', display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.5)' }}>
+          <div className="glass-card" style={{ 
+            border: '1px solid var(--accent-success)', 
+            color: 'var(--accent-success)', 
+            background: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
+            display: 'flex', 
+            gap: '12px', 
+            alignItems: 'center', 
+            padding: '16px', 
+            boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)' 
+          }}>
             <CheckCircle2 size={20} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Success</div>
