@@ -38,26 +38,26 @@ describe('ChainValidator', () => {
   test('accepts a valid multi-block chain', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     const block2 = mineBlock(2, [], block1.hash);
-    expect(ChainValidator.isChainValid([genesis, block1, block2], genesis)).toBe(true);
+    expect(ChainValidator.isChainValid([genesis, block1, block2], genesis, 1)).toBe(true);
   });
 
   test('rejects a chain with a tampered genesis block', () => {
     const fakeGenesis = makeGenesisBlock();
     (fakeGenesis as any).timestamp = 9999999999999;
-    expect(ChainValidator.isChainValid([fakeGenesis], genesis)).toBe(false);
+    expect(ChainValidator.isChainValid([fakeGenesis], genesis, 1)).toBe(false);
   });
 
   test('rejects a chain where a block hash has been tampered', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     // Tamper the stored hash directly
     (block1 as any).hash = 'deadbeef';
-    expect(ChainValidator.isChainValid([genesis, block1], genesis)).toBe(false);
+    expect(ChainValidator.isChainValid([genesis, block1], genesis, 1)).toBe(false);
   });
 
   test('rejects a chain where a block previousHash link is broken', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     const block2 = mineBlock(2, [], 'wrong-previous-hash');
-    expect(ChainValidator.isChainValid([genesis, block1, block2], genesis)).toBe(false);
+    expect(ChainValidator.isChainValid([genesis, block1, block2], genesis, 1)).toBe(false);
   });
 
   test('rejects a chain containing a block with an invalid transaction', () => {
@@ -72,24 +72,24 @@ describe('ChainValidator', () => {
     const block1 = new Block(1, Date.now(), [tx, rewardTx], genesis.hash);
     block1.mineBlock(1);
 
-    expect(ChainValidator.isChainValid([genesis, block1], genesis)).toBe(false);
+    expect(ChainValidator.isChainValid([genesis, block1], genesis, 1)).toBe(false);
   });
 
   test('validateBlock() passes for a valid block', () => {
     const block1 = mineBlock(1, [], genesis.hash);
-    expect(ChainValidator.validateBlock(block1, genesis, 100)).toBe(true);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(true);
   });
 
   test('validateBlock() fails if hash is stale after tampering', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     (block1 as any).hash = 'tampered';
-    expect(ChainValidator.validateBlock(block1, genesis, 100)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
   });
 
   test('validateBlock() fails if mining reward is missing', () => {
     const block1 = new Block(1, Date.now(), [], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
   });
 
   test('validateBlock() fails if multiple mining rewards are present', () => {
@@ -97,13 +97,13 @@ describe('ChainValidator', () => {
     const tx2 = new Transaction(null, 'miner', 100);
     const block1 = new Block(1, Date.now(), [tx1, tx2], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
   });
 
   test('validateBlock() fails if mining reward amount is incorrect', () => {
     const tx = new Transaction(null, 'miner', 500); // Should be 100
     const block1 = new Block(1, Date.now(), [tx], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
   });
 });

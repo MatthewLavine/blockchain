@@ -24,7 +24,15 @@ export class Block {
    * The hash acts like a unique digital fingerprint for the block's data.
    */
   public calculateHash(): string {
-    const dataToHash = this.index + this.previousHash + this.timestamp + JSON.stringify(this.transactions) + this.nonce;
+    // We use a separator '|' to prevent concatenation collisions 
+    // (e.g., Index 1 + Hash "0" vs Index 10 + Hash "")
+    const dataToHash = [
+      this.index,
+      this.previousHash,
+      this.timestamp,
+      JSON.stringify(this.transactions),
+      this.nonce
+    ].join('|');
     
     return crypto
       .createHash('sha256')

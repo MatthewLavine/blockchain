@@ -9,8 +9,9 @@ export class ChainValidator {
      * Validates an entire blockchain from start to finish.
      * @param chain The array of blocks to validate.
      * @param genesisBlock The expected genesis block to compare against.
+     * @param difficulty The expected Proof of Work difficulty.
      */
-    public static isChainValid(chain: Block[], genesisBlock: Block): boolean {
+    public static isChainValid(chain: Block[], genesisBlock: Block, difficulty: number = NETWORK_CONSTANTS.INITIAL_DIFFICULTY): boolean {
         // 1. Verify Genesis Block
         if (JSON.stringify(chain[0]) !== JSON.stringify(genesisBlock)) {
             return false;
@@ -24,7 +25,7 @@ export class ChainValidator {
             // The reward for THIS block was determined by the chain length BEFORE it was added
             const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(i - 1);
 
-            if (!this.validateBlock(currentBlock, previousBlock, expectedReward)) {
+            if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty)) {
                 return false;
             }
         }
@@ -35,13 +36,24 @@ export class ChainValidator {
     /**
      * Validates a single block against its predecessor.
      */
-    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number): boolean {
-        // 1. Check if the block's hash is mathematically correct
+    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number, difficulty: number): boolean {
+        // 1. Check if index is sequential
+        if (block.index !== previousBlock.index + 1) {
+            return false;
+        }
+
+        // 2. Check if the block's hash is mathematically correct
         if (block.hash !== block.calculateHash()) {
             return false;
         }
 
-        // 2. Check if it points to the correct previous block
+        // 3. Check if Proof of Work is satisfied (starts with 'difficulty' zeros)
+        const target = Array(difficulty + 1).join("0");
+        if (block.hash.substring(0, difficulty) !== target) {
+            return false;
+        }
+
+        // 4. Check if it points to the correct previous block
         if (block.previousHash !== previousBlock.hash) {
             return false;
         }
