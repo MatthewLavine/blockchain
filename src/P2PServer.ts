@@ -21,8 +21,16 @@ interface P2PMessage {
     data?: any; // We will further refine this in the handlers
 }
 
+/**
+ * Extended WebSocket interface to track peer metadata without 'any' casting.
+ */
+interface P2PSocket extends WebSocket {
+    peerAddress?: string;
+    isOutgoing?: boolean;
+}
+
 export class P2PServer {
-    private sockets: WebSocket[] = [];
+    private sockets: P2PSocket[] = [];
     private peerUrls: Set<string> = new Set();
     private blockchain: Blockchain;
     private myAddress: string | null = null;
@@ -52,7 +60,10 @@ export class P2PServer {
     public connectToPeer(peerUrl: string): void {
         if (this.peerUrls.has(peerUrl)) return; // Already connecting/connected
 
-        const socket = new WebSocket(peerUrl);
+        const socket = new WebSocket(peerUrl) as P2PSocket;
+        socket.isOutgoing = true;
+        socket.peerAddress = peerUrl;
+
         socket.on('open', () => {
             this.peerUrls.add(peerUrl);
             this.initConnection(socket);
@@ -63,7 +74,7 @@ export class P2PServer {
         });
     }
 
-    private initConnection(socket: WebSocket): void {
+    private initConnection(socket: P2PSocket): void {
         this.sockets.push(socket);
 
         // Handle incoming messages
@@ -88,7 +99,7 @@ export class P2PServer {
         }
     }
 
-    private handleMessage(socket: WebSocket, message: P2PMessage): void {
+    private handleMessage(socket: P2PSocket, message: P2PMessage): void {
         switch (message.type) {
             case MessageType.QUERY_LATEST:
                 this.handleQueryLatest(socket);
@@ -124,36 +135,56 @@ export class P2PServer {
         }
     }
 
-    private handleQueryLatest(socket: WebSocket): void {
+    private handleQueryLatest(socket: P2PSocket): void {
         this.write(socket, {
             type: MessageType.RESPONSE_BLOCKCHAIN,
             data: [this.blockchain.getLatestBlock()]
         });
     }
 
-    private handleQueryAll(socket: WebSocket): void {
+    private handleQueryAll(socket: P2PSocket): void {
         this.write(socket, {
             type: MessageType.RESPONSE_BLOCKCHAIN,
             data: this.blockchain.chain
         });
     }
 
-    private handleQueryPeers(socket: WebSocket): void {
+    private handleQueryPeers(socket: P2PSocket): void {
         this.write(socket, {
             type: MessageType.RESPONSE_PEERS,
             data: Array.from(this.peerUrls)
         });
     }
 
-    private handleAnnounceSelf(socket: WebSocket, peerAddress: string): void {
+    private handleAnnounceSelf(socket: P2PSocket, peerAddress: string): void {
         if (!peerAddress || peerAddress === this.myAddress) return;
 
-        // Check if we already have an active socket for this address
-        const existingSocket = this.sockets.find(s => (s as any).peerAddress === peerAddress);
-
-        if (existingSocket && existingSocket !== socket) {
+        // If this socket was an outgoing connection, it's already verified as that peerAddress
+        if (socket.isOutgoing && socket.peerAddress !== peerAddress) {
+            Logger.error(`Security Warning: Outgoing socket to ${socket.peerAddress} tried to announce itself as ${peerAddress}. Closing connection.`);
             socket.close();
             return;
+        }
+
+        // Check if we already have an active socket for this address
+        const existingSocket = this.sockets.find(s => s.peerAddress === peerAddress);
+
+        if (existingSocket && existingSocket !== socket) {
+            // If the EXISTING socket was one we connected to (outgoing), it's more trustworthy.
+            // We should keep it and reject this new incoming claim.
+            if (existingSocket.isOutgoing) {
+                socket.close();
+                return;
+            }
+
+            // If the NEW socket is outgoing but the existing one wasn't, the new one is more trustworthy.
+            if (socket.isOutgoing) {
+                existingSocket.close();
+            } else {
+                // Both are incoming or unknown? Close the new one to be safe.
+                socket.close();
+                return;
+            }
         }
 
         if (!this.peerUrls.has(peerAddress)) {
@@ -163,7 +194,7 @@ export class P2PServer {
         }
 
         // Tag the socket with the peer address for deduplication/tracking
-        (socket as any).peerAddress = peerAddress;
+        socket.peerAddress = peerAddress;
         Logger.log(`Peer connected: ${peerAddress}. Total unique peers: ${this.getPeers().length}`);
     }
 
@@ -217,7 +248,7 @@ export class P2PServer {
         }
     }
 
-    private handleTransactionBroadcast(socket: WebSocket, data: Record<string, any>): void {
+    private handleTransactionBroadcast(socket: P2PSocket, data: Record<string, any>): void {
         try {
             const tx = Transaction.fromObject(data);
             this.blockchain.createTransaction(tx);
@@ -231,7 +262,7 @@ export class P2PServer {
     /**
      * Broadcast a message to ALL connected peers, optionally excluding one
      */
-    public broadcast(message: P2PMessage, excludeSocket?: WebSocket): void {
+    public broadcast(message: P2PMessage, excludeSocket?: P2PSocket): void {
         this.sockets.forEach(socket => {
             if (socket !== excludeSocket) {
                 this.write(socket, message);
@@ -257,17 +288,17 @@ export class P2PServer {
         this.broadcast({ type: MessageType.RESET_CHAIN });
     }
 
-    private write(socket: WebSocket, message: P2PMessage): void {
+    private write(socket: P2PSocket, message: P2PMessage): void {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(message));
         }
     }
 
-    private removeSocket(socket: WebSocket): void {
+    private removeSocket(socket: P2PSocket): void {
         this.sockets = this.sockets.filter(s => s !== socket);
-        const address = (socket as any).peerAddress;
+        const address = socket.peerAddress;
         if (address) {
-            const remaining = this.sockets.some(s => (s as any).peerAddress === address);
+            const remaining = this.sockets.some(s => s.peerAddress === address);
             if (!remaining) {
                 this.peerUrls.delete(address);
                 Logger.log(`Peer disconnected: ${address}. Total unique peers: ${this.getPeers().length}`);
@@ -277,7 +308,7 @@ export class P2PServer {
 
     public getPeers(): string[] {
         return this.sockets
-            .map(s => (s as any).peerAddress || (s.url ? s.url : 'Unknown Peer'))
+            .map(s => s.peerAddress || (s.url ? s.url : 'Unknown Peer'))
             .filter(addr => addr && addr !== this.myAddress);
     }
 
