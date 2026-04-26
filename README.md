@@ -1,87 +1,72 @@
 # 🌌 Antigravity Chain
 [![CI](https://github.com/MatthewLavine/blockchain/actions/workflows/ci.yml/badge.svg)](https://github.com/MatthewLavine/blockchain/actions/workflows/ci.yml)
 
-Antigravity Chain is a custom-built, cryptographically secure blockchain implementation with a premium, multi-panel React dashboard. It features a full peer-to-peer transaction model, mining rewards with halving mechanisms, and an interactive block explorer.
+Antigravity Chain is a custom-built, cryptographically secure blockchain implementation designed for high reliability and security. It features a decentralized P2P network, a premium React dashboard, and a hardened consensus engine.
 
 > [!NOTE]
-> I used gemini to write this app as an exercise to learn how blockchains work.
+> I used Gemini to write this app as an exercise to learn how blockchains work.
 
-## ✨ Features
+## ✨ Core Features
 
-- **🔐 Cryptographically Secure**: Uses Elliptic Curve Cryptography (ECC) for transaction signing and SHA-256 for block hashing.
-- **🏗️ Modular Architecture**: Clean separation between the blockchain logic (TypeScript backend) and the dashboard (React/Vite frontend).
-- **📟 Dashboard UI**: A high-density, 3-column responsive layout with:
-    - **Wallet Management**: Public address generation and balance tracking.
-    - **Interactive Ledger**: Click any block to see detailed transaction history.
-    - **Mempool**: Real-time view of pending transactions.
-    - **Mining Controls**: Manual mining triggers with reward tracking.
-- **🌗 Theme-Aware**: Fully integrated Dark and Light modes with premium glassmorphism aesthetics.
-- **🔄 Live Updates**: Polling system ensures the dashboard reflects the latest state of the chain.
+- **🔐 Enterprise-Grade Security**:
+    - **Replay Protection**: Prevents re-submitting mined transactions using a high-performance signature index.
+    - **PoW Enforcement**: Strictly validates that all blocks meet the network's Proof of Work difficulty.
+    - **Collision-Resistant Hashing**: Uses structured data hashing with separators to prevent concatenation attacks.
+    - **Timestamp Guard**: Rejects blocks with manipulated timestamps (past or future).
+- **🌐 Decentralized P2P Network**:
+    - **Longest Chain Rule**: Automatically syncs and adopts the most valid, work-intensive chain from peers.
+    - **Optimized Propagation**: Intelligent broadcast routing prevents network loops and minimizes redundant traffic.
+    - **Automatic Discovery**: Nodes automatically share peer lists to build a robust mesh network.
+- **🏗️ Robust Architecture**:
+    - **Atomic Persistence**: Periodically saves state to disk with graceful shutdown handling (`SIGTERM`/`SIGINT`).
+    - **DOS Protection**: Implements hard limits on mempool size to prevent memory exhaustion attacks.
+    - **Halving Mechanism**: Automated mining reward halving every 100 blocks to control inflation.
+- **📟 Premium Dashboard**:
+    - **Real-time Explorer**: Interactive ledger with deep-dive transaction inspection.
+    - **Wallet Suite**: Integrated ECC key generation and balance tracking.
+    - **Glassmorphism UI**: High-density, theme-aware responsive design with professional aesthetics.
 
 ## 🛠️ Technology Stack
 
-- **Backend**: Node.js, Express, TypeScript, Elliptic (ECC), Crypto-JS (SHA-256).
+- **Backend**: Node.js, Express, TypeScript, Elliptic (secp256k1), Crypto (SHA-256).
 - **Frontend**: React, Vite, Lucide Icons, Vanilla CSS (Glassmorphism).
-- **Dev Tools**: ts-node-dev (for auto-restarting backend).
+- **Infrastructure**: Docker & Docker Compose for multi-node simulation.
 
 ## 🚀 Getting Started
 
-### 1. Prerequisites
-- Node.js (v16+)
-- npm or yarn
-
-### 2. Installation
-Clone the repository and install dependencies in both the root and frontend directories:
+### 1. Docker (Recommended)
+The easiest way to see the decentralized network in action is using Docker Compose, which spins up 5 nodes and the frontend:
 
 ```bash
-# Install root (backend) dependencies
+# Start the network
+docker compose up --build
+
+# Open the dashboard
+# http://localhost:8080
+```
+
+### 2. Manual Installation
+If you prefer running a single node locally:
+
+```bash
+# Install dependencies
 npm install
+cd frontend && npm install && cd ..
 
-# Install frontend dependencies
-cd frontend
-npm install
-```
-
-### 3. Running the Project
-You will need two terminal windows open:
-
-**Terminal 1: Backend Server**
-```bash
+# Start Backend (Terminal 1)
 npm run dev
+
+# Start Frontend (Terminal 2)
+cd frontend && npm run dev
 ```
 
-**Terminal 2: Frontend Dashboard**
-```bash
-cd frontend
-npm run dev
-```
-
-The dashboard will be available at `http://localhost:5173`.
-
-### 4. Running with Docker (Recommended)
-You can spin up the entire blockchain stack (frontend + 5 nodes) using Docker Compose:
-
-```bash
-# Start all services
-docker compose up
-
-# Run in background
-docker compose up -d
-
-# See logs
-docker compose logs -f
-
-# Check health status of nodes
-docker compose ps
-```
-
-The dashboard will be available at `http://localhost:8080`.
-
-## 📜 Blockchain Rules
-- **Genesis Block**: The chain starts with a special hardcoded block.
-- **Mining Rewards**: Miners receive coins for securing the network.
-- **Halving**: The mining reward is cut in half every **100 blocks**.
-- **Difficulty**: The proof-of-work difficulty is currently set to 4 (leading zeros).
+## 📜 Network Protocol
+- **Consensus**: Proof of Work (SHA-256).
+- **Initial Difficulty**: 4 (leading zeros).
+- **Initial Reward**: 100 AGC.
+- **Halving Interval**: 100 Blocks.
+- **Signature Algorithm**: ECDSA (secp256k1).
+- **P2P Sync**: WebSocket-based mesh.
 
 ## 📄 License
 This project is for educational purposes. Feel free to use and modify it!
