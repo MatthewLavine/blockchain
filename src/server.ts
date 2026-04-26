@@ -117,7 +117,33 @@ app.post('/mine', (req, res) => {
   }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   Logger.log(`Blockchain Node listening at http://localhost:${port}`);
   p2pServer.listen(Number(p2pPort), p2pHost);
 });
+
+/**
+ * Handle graceful shutdown
+ */
+const shutdown = (signal: string) => {
+  Logger.log(`Received ${signal}. Starting graceful shutdown...`);
+
+  server.close(() => {
+    Logger.log('HTTP server closed.');
+
+    p2pServer.close();
+    myCoin.shutdown();
+
+    Logger.log('Shutdown complete. Goodbye!');
+    process.exit(0);
+  });
+
+  // Force exit after 5 seconds if graceful shutdown fails
+  setTimeout(() => {
+    Logger.error('Graceful shutdown timed out. Forcing exit.');
+    process.exit(1);
+  }, 5000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

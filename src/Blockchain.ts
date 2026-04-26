@@ -230,4 +230,12 @@ export class Blockchain {
     this.saveToDisk();
     return true;
   }
+
+  /**
+   * Gracefully shuts down the blockchain, ensuring latest state is persisted.
+   */
+  public shutdown(): void {
+    Logger.log('Shutting down blockchain... Saving latest state.');
+    this.saveToDisk();
+  }
 }

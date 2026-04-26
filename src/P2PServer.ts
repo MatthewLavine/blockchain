@@ -26,6 +26,7 @@ export class P2PServer {
     private peerUrls: Set<string> = new Set();
     private blockchain: Blockchain;
     private myAddress: string | null = null;
+    private wss: WebSocket.Server | null = null;
 
     constructor(blockchain: Blockchain) {
         this.blockchain = blockchain;
@@ -35,10 +36,10 @@ export class P2PServer {
      * Start the P2P server to listen for incoming connections from peers
      */
     public listen(port: number, host: string = 'localhost'): void {
-        const server = new WebSocket.Server({ port });
+        this.wss = new WebSocket.Server({ port });
         this.myAddress = `ws://${host}:${port}`;
 
-        server.on('connection', (socket) => {
+        this.wss.on('connection', (socket) => {
             this.initConnection(socket);
         });
 
@@ -264,5 +265,24 @@ export class P2PServer {
         return this.sockets
             .map(s => (s as any).peerAddress || (s.url ? s.url : 'Unknown Peer'))
             .filter(addr => addr && addr !== this.myAddress);
+    }
+
+    /**
+     * Gracefully close all connections and the server
+     */
+    public close(): void {
+        Logger.log('Closing P2P server and all connections...');
+        this.sockets.forEach(socket => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        });
+        this.sockets = [];
+        this.peerUrls.clear();
+
+        if (this.wss) {
+            this.wss.close();
+            this.wss = null;
+        }
     }
 }
