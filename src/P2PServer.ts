@@ -195,7 +195,9 @@ export class P2PServer {
                 this.broadcast({ type: MessageType.QUERY_ALL });
             } else {
                 Logger.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
-                this.blockchain.replaceChain(receivedBlocks);
+                if (this.blockchain.replaceChain(receivedBlocks)) {
+                    this.broadcastLatest();
+                }
             }
         }
     }

@@ -103,26 +103,32 @@ export class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
+
   /**
    * Takes all pending transactions, puts them in a Block, and mines it.
    * @param miningRewardAddress The wallet address to send the mining reward to.
    */
   public minePendingTransactions(miningRewardAddress: string): void {
-    const block = new Block(this.chain.length, Date.now(), this.mempool.getTransactions(), this.getLatestBlock().hash);
+    // 1. Create the reward transaction for the miner
+    const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+    
+    // 2. Combine with other pending transactions
+    const transactionsToMine = [...this.mempool.getTransactions(), rewardTx];
 
+    // 3. Create and mine the block
+    const block = new Block(this.chain.length, Date.now(), transactionsToMine, this.getLatestBlock().hash);
     block.mineBlock(this.difficulty);
+    
     Logger.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
+    
+    // 4. Add the mined block to our chain
     this.addBlock(block);
 
-    // Reset pending transactions with the mining reward
-    this.mempool.setTransactions([
-      new Transaction(null, miningRewardAddress, this.miningReward)
-    ]);
+    // 5. Clear the mempool
+    this.mempool.clear();
 
-    // Halving mechanism: Every HALVING_INTERVAL blocks, the mining reward is cut in half
-    if (this.chain.length % NETWORK_CONSTANTS.HALVING_INTERVAL === 0) {
-      this.miningReward = this.miningReward / 2;
-    }
+    // 6. Update internal state for the NEXT mining operation (halving check)
+    this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
   }
 
   /**
@@ -220,6 +226,7 @@ export class Blockchain {
 
     Logger.log('Replacing blockchain with the longer chain from peer.');
     this.chain = hydratedChain;
+    this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
     this.saveToDisk();
     return true;
   }

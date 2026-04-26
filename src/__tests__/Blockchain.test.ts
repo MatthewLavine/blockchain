@@ -28,8 +28,7 @@ describe('Blockchain', () => {
 
   test('getBalanceOfAddress() reflects mining rewards', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
-    // The reward tx is pending until the NEXT block is mined
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    // The reward tx is now in the latest block
     expect(chain.getBalanceOfAddress(alice.getPublic('hex'))).toBeGreaterThan(0);
   });
 
@@ -50,7 +49,6 @@ describe('Blockchain', () => {
   test('createTransaction() accepts a valid funded transaction', () => {
     // Fund alice
     chain.minePendingTransactions(alice.getPublic('hex'));
-    chain.minePendingTransactions(alice.getPublic('hex')); // settle the reward
 
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
     expect(aliceBalance).toBeGreaterThan(0);
@@ -109,21 +107,18 @@ describe('Blockchain', () => {
     expect(chain.chain.length).toBe(2);
   });
 
-  test('minePendingTransactions() replaces mempool with a single mining reward tx', () => {
+  test('minePendingTransactions() clears the mempool', () => {
     // Add a user transaction first
     chain.minePendingTransactions(alice.getPublic('hex'));
-    chain.minePendingTransactions(alice.getPublic('hex')); // settle reward into a block
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
     const userTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
     userTx.signTransaction(alice);
     chain.createTransaction(userTx);
 
-    // Mine — should clear the user tx and leave only the reward tx
+    // Mine — should clear the mempool
     chain.minePendingTransactions(bob.getPublic('hex'));
-    expect(chain.pendingTransactions).toHaveLength(1);
-    expect(chain.pendingTransactions[0].fromAddress).toBeNull(); // reward tx has no sender
-    expect(chain.pendingTransactions[0].toAddress).toBe(bob.getPublic('hex'));
+    expect(chain.pendingTransactions).toHaveLength(0);
   });
 
   test('getLatestBlock() returns the most recently added block', () => {
@@ -141,8 +136,7 @@ describe('Blockchain', () => {
   // ── Double-Spend Prevention ───────────────────────────────────────────────
 
   test('createTransaction() prevents double-spend using pending balance', () => {
-    // Fund alice: mine twice so reward is confirmed in the chain
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    // Fund alice
     chain.minePendingTransactions(alice.getPublic('hex'));
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
