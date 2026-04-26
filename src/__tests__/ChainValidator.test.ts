@@ -77,19 +77,19 @@ describe('ChainValidator', () => {
 
   test('validateBlock() passes for a valid block', () => {
     const block1 = mineBlock(1, [], genesis.hash);
-    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(true);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1, new Map())).toBe(true);
   });
 
   test('validateBlock() fails if hash is stale after tampering', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     (block1 as any).hash = 'tampered';
-    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1, new Map())).toBe(false);
   });
 
   test('validateBlock() fails if mining reward is missing', () => {
     const block1 = new Block(1, Date.now(), [], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1, new Map())).toBe(false);
   });
 
   test('validateBlock() fails if multiple mining rewards are present', () => {
@@ -97,13 +97,13 @@ describe('ChainValidator', () => {
     const tx2 = new Transaction(null, 'miner', 100);
     const block1 = new Block(1, Date.now(), [tx1, tx2], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1, new Map())).toBe(false);
   });
 
   test('validateBlock() fails if mining reward amount is incorrect', () => {
     const tx = new Transaction(null, 'miner', 500); // Should be 100
     const block1 = new Block(1, Date.now(), [tx], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, 100, 1)).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, 100, 1, new Map())).toBe(false);
   });
 });

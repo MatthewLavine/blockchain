@@ -227,8 +227,8 @@ export class Blockchain {
   /**
    * Loops through the entire chain to verify its integrity.
    */
-  public isChainValid(): boolean {
-    return ChainValidator.isChainValid(this.chain, this.createGenesisBlock());
+  public isChainValid(difficulty: number = this.difficulty): boolean {
+    return ChainValidator.isChainValid(this.chain, this.createGenesisBlock(), difficulty);
   }
   /**
    * Replaces the current chain with a new one, provided the new chain is longer and valid.

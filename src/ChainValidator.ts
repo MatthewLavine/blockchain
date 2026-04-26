@@ -19,6 +19,7 @@ export class ChainValidator {
 
         // 2. Verify subsequent blocks
         const knownSignatures: Set<string> = new Set();
+        const ledger: Map<string, number> = new Map();
         
         for (let i = 1; i < chain.length; i++) {
             const currentBlock = chain[i];
@@ -27,7 +28,7 @@ export class ChainValidator {
             // The reward for THIS block was determined by the chain length BEFORE it was added
             const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(i - 1);
 
-            if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty)) {
+            if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty, ledger)) {
                 return false;
             }
 
@@ -48,7 +49,7 @@ export class ChainValidator {
     /**
      * Validates a single block against its predecessor.
      */
-    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number, difficulty: number): boolean {
+    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number, difficulty: number, ledger: Map<string, number>): boolean {
         // 1. Check if index is sequential
         if (block.index !== previousBlock.index + 1) {
             return false;
@@ -98,6 +99,21 @@ export class ChainValidator {
                 if (tx.amount !== expectedReward) {
                     return false;
                 }
+                
+                // Add reward to recipient
+                const currentBalance = ledger.get(tx.toAddress) || 0;
+                ledger.set(tx.toAddress, currentBalance + tx.amount);
+            } else {
+                // Regular transaction: Check balance
+                const senderBalance = ledger.get(tx.fromAddress) || 0;
+                if (senderBalance < tx.amount) {
+                    return false; // Sender has insufficient funds!
+                }
+                
+                // Transfer funds
+                ledger.set(tx.fromAddress, senderBalance - tx.amount);
+                const recipientBalance = ledger.get(tx.toAddress) || 0;
+                ledger.set(tx.toAddress, recipientBalance + tx.amount);
             }
         }
 
