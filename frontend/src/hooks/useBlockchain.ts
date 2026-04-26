@@ -12,6 +12,7 @@ export interface Transaction {
   toAddress: string;
   amount: number;
   timestamp: number;
+  nonce: number;
   signature: string;
 }
 
@@ -97,12 +98,19 @@ export function useBlockchain() {
   const sendTransaction = async (recipient: string, amount: number) => {
     if (!keyPair || !recipient || !amount) return false;
     try {
+      // 1. Fetch the next expected nonce for this account
+      const nonceRes = await axios.get(`${API_BASE}/nonce/${walletAddress}`);
+      const nonce = nonceRes.data.nextNonce;
+
       const timestamp = Date.now();
       // Convert user input (AGC) to atomic units for the backend
       const atomicAmount = Math.round(amount * UNITS_PER_COIN);
-      const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, timestamp };
+      const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, timestamp, nonce };
 
-      const hash = SHA256(`${tx.fromAddress}|${tx.toAddress}|${tx.amount}|${tx.timestamp}`).toString();
+      // 2. Hash the transaction (including the nonce)
+      const hash = SHA256(`${tx.fromAddress}|${tx.toAddress}|${tx.amount}|${tx.timestamp}|${tx.nonce}`).toString();
+
+      // 3. Sign the hash
       const signature = keyPair.sign(hash, 'hex').toDER('hex');
 
       await axios.post(`${API_BASE}/transaction`, { ...tx, signature });

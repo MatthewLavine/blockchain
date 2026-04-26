@@ -51,6 +51,15 @@ app.get('/balance/:address', (req, res) => {
 });
 
 /**
+ * Returns the next expected nonce for a specific wallet address
+ */
+app.get('/nonce/:address', (req, res) => {
+  const address = req.params.address;
+  const nextNonce = myCoin.getNextNonce(address);
+  res.json({ address, nextNonce });
+});
+
+/**
  * Returns the list of pending transactions in the mempool
  */
 app.get('/pending', (req, res) => {

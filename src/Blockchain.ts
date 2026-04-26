@@ -15,6 +15,7 @@ export class Blockchain {
   private storagePath: string | null = null;
   private knownSignatures: Set<string> = new Set();
   private ledger: Map<string, number> = new Map();
+  private accountNonces: Map<string, number> = new Map();
   private MAX_MEMPOOL_SIZE = 5000;
 
   constructor() {
@@ -24,6 +25,7 @@ export class Blockchain {
     this.mempool = new Mempool();
     this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
     this.ledger = new Map();
+    this.accountNonces = new Map();
     // Process Genesis transactions (if any)
     this.updateLedgerWithBlock(this.chain[0]);
   }
@@ -65,8 +67,9 @@ export class Blockchain {
 
       this.miningReward = data.miningReward;
 
-      // Rebuild stateful ledger from the trusted block history
+      // Rebuild stateful ledger and nonces from the trusted block history
       this.ledger = this.getLedger();
+      this.accountNonces = this.getAccountNonces();
 
       // Rebuild the known signatures set for fast replay protection
       this.knownSignatures.clear();
@@ -99,6 +102,7 @@ export class Blockchain {
     this.mempool.clear();
     this.knownSignatures.clear();
     this.ledger.clear();
+    this.accountNonces.clear();
     this.saveToDisk();
   }
 
@@ -166,6 +170,7 @@ export class Blockchain {
     // Create a temporary copy of the ledger for atomic validation.
     // ChainValidator.validateBlock will mutate this copy.
     const tempLedger = new Map(this.ledger);
+    const tempNonces = new Map(this.accountNonces);
 
     // 2. Perform full validation using the temporary ledger
     // First, check for replay attacks (both against existing chain and within this block)
@@ -179,13 +184,14 @@ export class Blockchain {
       }
     }
 
-    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, tempLedger)) {
+    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, tempLedger, tempNonces)) {
       throw new Error(`Invalid block received: Block #${hydratedBlock.index} failed validation.`);
     }
 
     // 3. Add to chain and update master ledger only if validation passed
     this.chain.push(hydratedBlock);
     this.ledger = tempLedger;
+    this.accountNonces = tempNonces;
 
     // Add these signatures to our known set for replay protection
     for (const tx of hydratedBlock.transactions) {
@@ -213,6 +219,39 @@ export class Blockchain {
   }
 
   /**
+   * Builds the account nonce map based on all mined blocks.
+   */
+  public getAccountNonces(): Map<string, number> {
+    const nonces = new Map<string, number>();
+    for (const block of this.chain) {
+      for (const tx of block.transactions) {
+        if (tx.fromAddress !== null) {
+          const currentNonce = nonces.get(tx.fromAddress) || 0;
+          nonces.set(tx.fromAddress, currentNonce + 1);
+        }
+      }
+    }
+    return nonces;
+  }
+
+  /**
+   * Returns the next expected nonce for an address, considering both mined 
+   * blocks and pending transactions in the mempool.
+   */
+  public getNextNonce(address: string): number {
+    let nonce = this.accountNonces.get(address) || 0;
+    
+    // Add pending transactions from this address
+    for (const tx of this.mempool.getTransactions()) {
+      if (tx.fromAddress === address) {
+        nonce++;
+      }
+    }
+    
+    return nonce;
+  }
+
+  /**
    * Adds a new transaction to the pool of pending transactions.
    * It enforces that the transaction must be signed, valid, and the sender has enough funds!
    */
@@ -228,6 +267,11 @@ export class Blockchain {
 
     if (!transaction.isValid()) {
       throw new Error('Cannot add invalid transaction to chain');
+    }
+
+    const expectedNonce = this.getNextNonce(transaction.fromAddress);
+    if (transaction.nonce !== expectedNonce) {
+      throw new Error(`Invalid nonce: Expected ${expectedNonce} but got ${transaction.nonce}.`);
     }
 
     if (this.mempool.containsTransaction(transaction)) {
@@ -314,8 +358,9 @@ export class Blockchain {
     this.chain = hydratedChain;
     this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
 
-    // Rebuild the stateful ledger for the new chain
+    // Rebuild the stateful ledger and nonces for the new chain
     this.ledger = this.getLedger();
+    this.accountNonces = this.getAccountNonces();
 
     // Rebuild signature set for the new chain
     this.knownSignatures.clear();

@@ -19,6 +19,8 @@ RUN npm run build
 # Production stage
 FROM nginx:stable-alpine
 
+ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
+
 # Copy the build output from the build stage to nginx's serve directory
 COPY --from=build /app/dist /usr/share/nginx/html
 

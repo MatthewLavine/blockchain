@@ -124,11 +124,11 @@ describe('Blockchain', () => {
 
   test('minePendingTransactions() only removes transactions that were included in the block', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
-    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10);
+    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10, 0);
     tx1.signTransaction(alice);
     chain.createTransaction(tx1);
 
-    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20);
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20, 1);
     tx2.signTransaction(alice);
     chain.createTransaction(tx2);
 
@@ -161,10 +161,10 @@ describe('Blockchain', () => {
     const initialBalance = chain.getBalanceOfAddress(address);
     
     // 2. Create a block with one valid tx and one invalid tx (insufficient funds)
-    const validTx = new Transaction(address, recipient, 1000);
+    const validTx = new Transaction(address, recipient, 1000, 0);
     validTx.signTransaction(alice);
     
-    const invalidTx = new Transaction(address, recipient, initialBalance + 1); 
+    const invalidTx = new Transaction(address, recipient, initialBalance + 1, 1); 
     invalidTx.signTransaction(alice);
     
     const block = new Block(chain.chain.length, Date.now(), [validTx, invalidTx], chain.getLatestBlock().hash);
@@ -206,7 +206,8 @@ describe('Blockchain', () => {
     expect(() => chain.createTransaction(tx1)).not.toThrow();
 
     // Second tx tries to spend the same balance before it's mined — should fail
-    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    // We must provide the correct next nonce (1) even for a failing transaction
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance, 1);
     tx2.signTransaction(alice);
     expect(() => chain.createTransaction(tx2)).toThrow('Not enough balance');
   });

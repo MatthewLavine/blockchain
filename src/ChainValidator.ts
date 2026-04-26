@@ -20,11 +20,18 @@ export class ChainValidator {
         // 2. Verify subsequent blocks
         const knownSignatures: Set<string> = new Set();
         const ledger: Map<string, number> = new Map();
+        const nonces: Map<string, number> = new Map();
         
         // 2. Process Genesis transactions (if any) to initialize the ledger state
         for (const tx of chain[0].transactions) {
             const recipientBalance = ledger.get(tx.toAddress) || 0;
             ledger.set(tx.toAddress, recipientBalance + tx.amount);
+            
+            if (tx.fromAddress) {
+                const currentNonce = nonces.get(tx.fromAddress) || 0;
+                nonces.set(tx.fromAddress, currentNonce + 1);
+            }
+
             if (tx.signature) knownSignatures.add(tx.signature);
         }
 
@@ -35,9 +42,17 @@ export class ChainValidator {
             // The reward for THIS block is determined by its index
             const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(currentBlock.index);
 
-            if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty, ledger)) {
+            // Create copies of ledger/nonces to pass to validateBlock
+            const tempLedger = new Map(ledger);
+            const tempNonces = new Map(nonces);
+
+            if (!this.validateBlock(currentBlock, previousBlock, expectedReward, difficulty, tempLedger, tempNonces)) {
                 return false;
             }
+
+            // Sync the permanent ledger and nonces if block is valid
+            tempLedger.forEach((val, key) => ledger.set(key, val));
+            tempNonces.forEach((val, key) => nonces.set(key, val));
 
             // Check for duplicate transactions across blocks
             for (const tx of currentBlock.transactions) {
@@ -56,7 +71,7 @@ export class ChainValidator {
     /**
      * Validates a single block against its predecessor.
      */
-    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number, difficulty: number, ledger: Map<string, number>): boolean {
+    public static validateBlock(block: Block, previousBlock: Block, expectedReward: number, difficulty: number, ledger: Map<string, number>, nonces: Map<string, number>): boolean {
         // 1. Check if index is sequential
         if (block.index !== previousBlock.index + 1) {
             return false;
@@ -136,6 +151,13 @@ export class ChainValidator {
                 ledger.set(tx.fromAddress, senderBalance - tx.amount);
                 const recipientBalance = ledger.get(tx.toAddress) || 0;
                 ledger.set(tx.toAddress, recipientBalance + tx.amount);
+
+                // Validate and increment nonce
+                const currentNonce = nonces.get(tx.fromAddress) || 0;
+                if (tx.nonce !== currentNonce) {
+                    return false; // Invalid nonce!
+                }
+                nonces.set(tx.fromAddress, currentNonce + 1);
             }
         }
 

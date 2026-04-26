@@ -77,19 +77,19 @@ describe('ChainValidator', () => {
 
   test('validateBlock() passes for a valid block', () => {
     const block1 = mineBlock(1, [], genesis.hash);
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(true);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(true);
   });
 
   test('validateBlock() fails if hash is stale after tampering', () => {
     const block1 = mineBlock(1, [], genesis.hash);
     (block1 as any).hash = 'tampered';
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('validateBlock() fails if mining reward is missing', () => {
     const block1 = new Block(1, Date.now(), [], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('validateBlock() fails if multiple mining rewards are present', () => {
@@ -97,14 +97,14 @@ describe('ChainValidator', () => {
     const tx2 = new Transaction(null, 'miner', NETWORK_CONSTANTS.INITIAL_MINING_REWARD);
     const block1 = new Block(1, Date.now(), [tx1, tx2], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('validateBlock() fails if mining reward amount is incorrect', () => {
     const tx = new Transaction(null, 'miner', 500); // Should be INITIAL_MINING_REWARD
     const block1 = new Block(1, Date.now(), [tx], genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('validateBlock() fails if block exceeds MAX_BLOCK_TRANSACTIONS', () => {
@@ -114,7 +114,7 @@ describe('ChainValidator', () => {
     }
     const block1 = new Block(1, Date.now(), manyTxs, genesis.hash);
     block1.mineBlock(1);
-    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map())).toBe(false);
+    expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('accepts reward halving at block 100', () => {
@@ -127,6 +127,6 @@ describe('ChainValidator', () => {
     const block100 = mineBlock(100, [], prevBlock.hash, 2000);
     
     // Using index 100 should match the calculation
-    expect(ChainValidator.validateBlock(block100, prevBlock, reward100, 1, new Map())).toBe(true);
+    expect(ChainValidator.validateBlock(block100, prevBlock, reward100, 1, new Map(), new Map())).toBe(true);
   });
 });
