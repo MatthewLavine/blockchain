@@ -168,10 +168,14 @@ export class Blockchain {
     const tempLedger = new Map(this.ledger);
 
     // 2. Perform full validation using the temporary ledger
-    // First, check for replay attacks (duplicate signatures)
+    // First, check for replay attacks (both against existing chain and within this block)
+    const currentBlockSignatures = new Set<string>();
     for (const tx of hydratedBlock.transactions) {
-      if (tx.signature && this.knownSignatures.has(tx.signature)) {
-        throw new Error(`Replay attack detected: Transaction with signature ${tx.signature.substring(0, 10)}... already exists in the chain.`);
+      if (tx.signature) {
+        if (this.knownSignatures.has(tx.signature) || currentBlockSignatures.has(tx.signature)) {
+          throw new Error(`Replay attack detected: Transaction with signature ${tx.signature.substring(0, 10)}... already exists.`);
+        }
+        currentBlockSignatures.add(tx.signature);
       }
     }
 
@@ -213,6 +217,7 @@ export class Blockchain {
    * It enforces that the transaction must be signed, valid, and the sender has enough funds!
    */
   public createTransaction(transaction: Transaction): void {
+    // TODO: Implement transaction fees to prevent mempool spam DoS attacks
     if (!transaction.fromAddress || !transaction.toAddress) {
       throw new Error('Transaction must include from and to address');
     }

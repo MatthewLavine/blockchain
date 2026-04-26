@@ -79,6 +79,7 @@ export class P2PServer {
 
         // Handle incoming messages
         socket.on('message', (data: string) => {
+            // TODO: Implement P2P message size limits to prevent memory exhaustion DoS
             try {
                 const message = JSON.parse(data);
                 this.handleMessage(socket, message);
@@ -130,6 +131,7 @@ export class P2PServer {
                 break;
 
             case MessageType.RESET_CHAIN:
+                // SECURITY WARNING: This is unauthenticated and dangerous.
                 this.handleResetChain();
                 break;
         }
@@ -299,6 +301,8 @@ export class P2PServer {
     private write(socket: P2PSocket, message: P2PMessage): void {
         if (socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify(message));
+        } else {
+            // TODO: Track connection failures and implement peer banning/blacklisting
         }
     }
 

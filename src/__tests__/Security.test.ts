@@ -44,6 +44,27 @@ describe('Blockchain Security', () => {
         expect(antigravity.getBalanceOfAddress(myAddress)).toBe(balanceAfterFirst);
     });
 
+    test('should prevent intra-block replay attacks (duplicate tx in same block)', () => {
+        const tx = new Transaction(myAddress, otherAddress, 10);
+        tx.signTransaction(myKey);
+        
+        // Block contains the SAME transaction twice
+        const maliciousBlock = new Block(
+            antigravity.chain.length,
+            Date.now(),
+            [tx, tx, new Transaction(null, myAddress, 100 * 1000000)],
+            antigravity.getLatestBlock().hash
+        );
+        maliciousBlock.mineBlock(antigravity.difficulty);
+        
+        expect(() => {
+            antigravity.addBlock(maliciousBlock);
+        }).toThrow(/Replay attack detected/);
+        
+        // Ensure balance was NOT deducted (block should be rejected entirely)
+        expect(antigravity.getBalanceOfAddress(otherAddress)).toBe(0);
+    });
+
     test('should prevent concatenation collisions in hashing', () => {
         // tx1: from="abc", to="def", amount=1, ts=2 -> "abc|def|1|2"
         // tx2: from="ab", to="cdef", amount=1, ts=2 -> "ab|cdef|1|2"

@@ -99,9 +99,19 @@ export class ChainValidator {
 
         // 3. Verify all transactions inside the block
         let miningRewards = 0;
+        const seenSignatures = new Set<string>();
+
         for (const tx of block.transactions) {
             if (!tx.isValid() || !Number.isInteger(tx.amount)) {
                 return false;
+            }
+
+            // Prevent intra-block replay: a transaction signature must be unique within the block
+            if (tx.signature) {
+                if (seenSignatures.has(tx.signature)) {
+                    return false;
+                }
+                seenSignatures.add(tx.signature);
             }
 
             // Count mining rewards (fromAddress === null)
