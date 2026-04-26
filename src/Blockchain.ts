@@ -167,6 +167,10 @@ export class Blockchain {
       throw new Error('Transaction must include from and to address');
     }
 
+    if (!Number.isInteger(transaction.amount) || transaction.amount <= 0) {
+      throw new Error('Transaction amount must be a positive integer (atomic units).');
+    }
+
     if (!transaction.isValid()) {
       throw new Error('Cannot add invalid transaction to chain');
     }

@@ -12,8 +12,8 @@ export class ChainValidator {
      * @param difficulty The expected Proof of Work difficulty.
      */
     public static isChainValid(chain: Block[], genesisBlock: Block, difficulty: number = NETWORK_CONSTANTS.INITIAL_DIFFICULTY): boolean {
-        // 1. Verify Genesis Block
-        if (JSON.stringify(chain[0]) !== JSON.stringify(genesisBlock)) {
+        // 1. Verify Genesis Block (comparing hash is more reliable than JSON stringify)
+        if (chain[0].hash !== genesisBlock.hash || chain[0].hash !== chain[0].calculateHash()) {
             return false;
         }
 
@@ -55,6 +55,11 @@ export class ChainValidator {
             return false;
         }
 
+        // 1b. Check if block size is within limits
+        if (block.transactions.length > NETWORK_CONSTANTS.MAX_BLOCK_TRANSACTIONS) {
+            return false;
+        }
+
         // 2. Check if the block's hash is mathematically correct
         if (block.hash !== block.calculateHash()) {
             return false;
@@ -88,7 +93,7 @@ export class ChainValidator {
         // 3. Verify all transactions inside the block
         let miningRewards = 0;
         for (const tx of block.transactions) {
-            if (!tx.isValid()) {
+            if (!tx.isValid() || !Number.isInteger(tx.amount)) {
                 return false;
             }
 

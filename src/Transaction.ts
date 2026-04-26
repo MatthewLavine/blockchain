@@ -62,9 +62,9 @@ export class Transaction {
     // 1. Mining rewards are valid by default (they have no 'from' address to check)
     if (this.fromAddress === null) return true;
 
-    // 2. Prevent sending negative or zero amounts!
-    if (this.amount <= 0) {
-      throw new Error('Transaction amount must be higher than 0');
+    // 2. Prevent sending negative, zero, or non-integer amounts!
+    if (!Number.isInteger(this.amount) || this.amount <= 0) {
+      throw new Error('Transaction amount must be a positive integer (atomic units)');
     }
 
     // 3. If it has no signature, it's definitely invalid

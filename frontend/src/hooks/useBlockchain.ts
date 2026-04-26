@@ -5,6 +5,7 @@ import SHA256 from 'crypto-js/sha256';
 
 const ec = new EC('secp256k1');
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+const UNITS_PER_COIN = 1000000;
 
 export interface Transaction {
   fromAddress: string | null;
@@ -57,9 +58,23 @@ export function useBlockchain() {
         axios.get(`${API_BASE}/pending`),
         axios.get(`${API_BASE}/peers`)
       ]);
-      setBlocks(blocksRes.data.reverse());
-      setBalance(balanceRes.data.balance);
-      setPendingTransactions(pendingRes.data);
+
+      // Convert atomic units back to AGC for display
+      const hydratedBlocks = blocksRes.data.map((block: Block) => ({
+        ...block,
+        transactions: block.transactions.map(tx => ({
+          ...tx,
+          amount: tx.amount / UNITS_PER_COIN
+        }))
+      }));
+
+      setBlocks(hydratedBlocks.reverse());
+      setBalance(balanceRes.data.balance / UNITS_PER_COIN);
+      setPendingTransactions(pendingRes.data.map((tx: Transaction) => ({
+        ...tx,
+        amount: tx.amount / UNITS_PER_COIN
+      })));
+
       setPeers(peersRes.data);
       setError('');
     } catch (err) {
@@ -83,7 +98,10 @@ export function useBlockchain() {
     if (!keyPair || !recipient || !amount) return false;
     try {
       const timestamp = Date.now();
-      const tx = { fromAddress: walletAddress, toAddress: recipient, amount, timestamp };
+      // Convert user input (AGC) to atomic units for the backend
+      const atomicAmount = Math.round(amount * UNITS_PER_COIN);
+      const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, timestamp };
+      
       const hash = SHA256(tx.fromAddress + tx.toAddress + tx.amount + tx.timestamp).toString();
       const signature = keyPair.sign(hash).toDER('hex');
 

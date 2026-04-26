@@ -150,4 +150,11 @@ describe('Blockchain', () => {
     tx2.signTransaction(alice);
     expect(() => chain.createTransaction(tx2)).toThrow('Not enough balance');
   });
+
+  test('createTransaction() rejects floating point amounts', () => {
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10.5);
+    tx.signTransaction(alice);
+    expect(() => chain.createTransaction(tx)).toThrow('atomic units');
+  });
 });
