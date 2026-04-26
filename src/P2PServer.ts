@@ -170,20 +170,28 @@ export class P2PServer {
         const existingSocket = this.sockets.find(s => s.peerAddress === peerAddress);
 
         if (existingSocket && existingSocket !== socket) {
-            // If the EXISTING socket was one we connected to (outgoing), it's more trustworthy.
-            // We should keep it and reject this new incoming claim.
-            if (existingSocket.isOutgoing) {
-                socket.close();
-                return;
-            }
+            // Simultaneous connection race condition: both nodes connected to each other.
+            // We must deterministically choose only ONE connection to keep.
+            // We'll use address comparison as the tie-breaker.
+            const myAddr = this.myAddress || '';
+            const shouldKeepOutgoing = myAddr < peerAddress;
 
-            // If the NEW socket is outgoing but the existing one wasn't, the new one is more trustworthy.
-            if (socket.isOutgoing) {
-                existingSocket.close();
+            if (shouldKeepOutgoing) {
+                // I am the 'primary' for this pair; I keep my outgoing and close incoming.
+                if (socket.isOutgoing) {
+                    existingSocket.close();
+                } else {
+                    socket.close();
+                    return;
+                }
             } else {
-                // Both are incoming or unknown? Close the new one to be safe.
-                socket.close();
-                return;
+                // I am the 'secondary'; I keep the incoming and close my outgoing.
+                if (socket.isOutgoing) {
+                    socket.close();
+                    return;
+                } else {
+                    existingSocket.close();
+                }
             }
         }
 
@@ -307,9 +315,11 @@ export class P2PServer {
     }
 
     public getPeers(): string[] {
-        return this.sockets
-            .map(s => s.peerAddress || (s.url ? s.url : 'Unknown Peer'))
-            .filter(addr => addr && addr !== this.myAddress);
+        const addresses = this.sockets
+            .map(s => s.peerAddress)
+            .filter((addr): addr is string => !!addr && addr !== this.myAddress);
+
+        return Array.from(new Set(addresses));
     }
 
     /**
