@@ -174,8 +174,12 @@ export class P2PServer {
      * DO NOT USE THIS IN A PRODUCTION MAINNET!
      */
     private handleResetChain(): void {
-        Logger.log('Received RESET_CHAIN signal. Wiping local state.');
-        this.blockchain.reset();
+        if (process.env.ALLOW_REMOTE_RESET === 'true') {
+            Logger.log('Received RESET_CHAIN signal. Wiping local state.');
+            this.blockchain.reset();
+        } else {
+            Logger.log('Ignored RESET_CHAIN signal: Remote reset is disabled by default for security.');
+        }
     }
 
     private handlePeerListResponse(receivedPeerUrls: string[]): void {

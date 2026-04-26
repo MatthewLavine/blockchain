@@ -21,6 +21,13 @@ export class ChainValidator {
         const knownSignatures: Set<string> = new Set();
         const ledger: Map<string, number> = new Map();
         
+        // 2. Process Genesis transactions (if any) to initialize the ledger state
+        for (const tx of chain[0].transactions) {
+            const recipientBalance = ledger.get(tx.toAddress) || 0;
+            ledger.set(tx.toAddress, recipientBalance + tx.amount);
+            if (tx.signature) knownSignatures.add(tx.signature);
+        }
+
         for (let i = 1; i < chain.length; i++) {
             const currentBlock = chain[i];
             const previousBlock = chain[i - 1];

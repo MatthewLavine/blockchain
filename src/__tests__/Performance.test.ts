@@ -40,7 +40,7 @@ describe('Blockchain Performance Benchmark', () => {
   };
 
   test('Benchmark getLedger() and isChainValid() performance', () => {
-    const sizes = [10, 100, 1000, 10000, 20000];
+    const sizes = [10, 100, 1000, 10000, 100000];
     const txsPerBlock = 10;
 
     process.stdout.write('\n--- Comprehensive Performance Benchmark (Crypto Mocked) ---\n');

@@ -63,9 +63,16 @@ app.get('/pending', (req, res) => {
  * rapid testing in development.
  */
 app.post('/reset', (req, res) => {
-  myCoin.reset();
-  p2pServer.broadcastReset();
-  res.json({ message: 'Blockchain has been reset successfully.' });
+  if (process.env.ALLOW_REMOTE_RESET === 'true') {
+    myCoin.reset();
+    p2pServer.broadcastReset();
+    res.json({ message: 'Blockchain has been reset successfully.' });
+  } else {
+    res.status(403).json({ 
+      error: 'Reset forbidden', 
+      message: 'The reset functionality is disabled on this node for security.' 
+    });
+  }
 });
 
 app.get('/peers', (req, res) => {

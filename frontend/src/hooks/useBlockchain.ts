@@ -146,17 +146,17 @@ export function useBlockchain() {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch(`${API_BASE}/reset`, {
-        method: 'POST',
-      });
-      const data = await response.json();
-      setSuccess(data.message);
+      const response = await axios.post(`${API_BASE}/reset`);
+      setSuccess(response.data.message);
       await fetchData();
-    } catch (err) {
-      setError('Failed to reset blockchain.');
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to reset blockchain.');
     } finally {
       setIsLoading(false);
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => {
+        setSuccess('');
+        setError('');
+      }, 5000);
     }
   };
 

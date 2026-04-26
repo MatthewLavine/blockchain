@@ -152,6 +152,35 @@ describe('Blockchain', () => {
     expect(() => chain.addBlock(badBlock)).toThrow('failed validation');
   });
 
+  test('addBlock() should not mutate the ledger if validation fails halfway', () => {
+    const address = alice.getPublic('hex');
+    const recipient = bob.getPublic('hex');
+    
+    // 1. Give Alice some money
+    chain.minePendingTransactions(address);
+    const initialBalance = chain.getBalanceOfAddress(address);
+    
+    // 2. Create a block with one valid tx and one invalid tx (insufficient funds)
+    const validTx = new Transaction(address, recipient, 1000);
+    validTx.signTransaction(alice);
+    
+    const invalidTx = new Transaction(address, recipient, initialBalance + 1); 
+    invalidTx.signTransaction(alice);
+    
+    const block = new Block(chain.chain.length, Date.now(), [validTx, invalidTx], chain.getLatestBlock().hash);
+    block.mineBlock(chain.difficulty);
+    
+    // 3. Try to add the block
+    try {
+      chain.addBlock(block);
+    } catch (e) {
+      // Expected
+    }
+    
+    // 4. Verify Alice's balance is still initialBalance (the validTx was rolled back)
+    expect(chain.getBalanceOfAddress(address)).toBe(initialBalance);
+  });
+
   test('getLatestBlock() returns the most recently added block', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
     const latest = chain.getLatestBlock();

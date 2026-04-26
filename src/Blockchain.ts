@@ -14,6 +14,7 @@ export class Blockchain {
   public miningReward: number;
   private storagePath: string | null = null;
   private knownSignatures: Set<string> = new Set();
+  private ledger: Map<string, number> = new Map();
   private MAX_MEMPOOL_SIZE = 5000;
 
   constructor() {
@@ -22,6 +23,9 @@ export class Blockchain {
     this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
     this.mempool = new Mempool();
     this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
+    this.ledger = new Map();
+    // Process Genesis transactions (if any)
+    this.updateLedgerWithBlock(this.chain[0]);
   }
 
   public get pendingTransactions(): Transaction[] {
@@ -61,6 +65,9 @@ export class Blockchain {
 
       this.miningReward = data.miningReward;
 
+      // Rebuild stateful ledger from the trusted block history
+      this.ledger = this.getLedger();
+
       // Rebuild the known signatures set for fast replay protection
       this.knownSignatures.clear();
       for (const block of this.chain) {
@@ -91,6 +98,7 @@ export class Blockchain {
     this.chain = [this.createGenesisBlock()];
     this.mempool.clear();
     this.knownSignatures.clear();
+    this.ledger.clear();
     this.saveToDisk();
   }
 
@@ -124,16 +132,16 @@ export class Blockchain {
     const nextBlockIndex = this.chain.length;
     const currentReward = NETWORK_CONSTANTS.calculateMiningReward(nextBlockIndex);
     const rewardTx = new Transaction(null, miningRewardAddress, currentReward);
-    
+
     // 2. Combine with other pending transactions
     const transactionsToMine = [...this.mempool.getTransactions(), rewardTx];
 
     // 3. Create and mine the block
     const block = new Block(this.chain.length, Date.now(), transactionsToMine, this.getLatestBlock().hash);
     block.mineBlock(this.difficulty);
-    
+
     Logger.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
-    
+
     // 4. Add the mined block to our chain
     this.addBlock(block);
 
@@ -150,26 +158,54 @@ export class Blockchain {
    */
   public addBlock(newBlock: Record<string, any> | Block): void {
     const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
-    
+
     // 1. Prepare validation context
     const latestBlock = this.getLatestBlock();
     const expectedReward = NETWORK_CONSTANTS.calculateMiningReward(hydratedBlock.index);
-    const currentLedger = this.getLedger();
 
-    // 2. Perform full validation
-    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, currentLedger)) {
+    // Create a temporary copy of the ledger for atomic validation.
+    // ChainValidator.validateBlock will mutate this copy.
+    const tempLedger = new Map(this.ledger);
+
+    // 2. Perform full validation using the temporary ledger
+    // First, check for replay attacks (duplicate signatures)
+    for (const tx of hydratedBlock.transactions) {
+      if (tx.signature && this.knownSignatures.has(tx.signature)) {
+        throw new Error(`Replay attack detected: Transaction with signature ${tx.signature.substring(0, 10)}... already exists in the chain.`);
+      }
+    }
+
+    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, tempLedger)) {
       throw new Error(`Invalid block received: Block #${hydratedBlock.index} failed validation.`);
     }
 
-    // 3. Add to chain if valid
+    // 3. Add to chain and update master ledger only if validation passed
     this.chain.push(hydratedBlock);
-    
+    this.ledger = tempLedger;
+
     // Add these signatures to our known set for replay protection
     for (const tx of hydratedBlock.transactions) {
       if (tx.signature) this.knownSignatures.add(tx.signature);
     }
 
+    // 5. Sync mempool: Remove any transactions that were just included in this block
+    this.mempool.removeTransactions(hydratedBlock.transactions);
+
     this.saveToDisk();
+  }
+
+  /**
+   * Updates the stateful ledger with transactions from a newly added block.
+   */
+  private updateLedgerWithBlock(block: Block): void {
+    for (const tx of block.transactions) {
+      if (tx.fromAddress !== null) {
+        const senderBalance = this.ledger.get(tx.fromAddress) || 0;
+        this.ledger.set(tx.fromAddress, senderBalance - tx.amount);
+      }
+      const recipientBalance = this.ledger.get(tx.toAddress) || 0;
+      this.ledger.set(tx.toAddress, recipientBalance + tx.amount);
+    }
   }
 
   /**
@@ -219,27 +255,10 @@ export class Blockchain {
   }
 
   /**
-   * Calculates the balance of a given wallet address by looping through the entire blockchain
-   * and looking for transactions sent to or from this address.
+   * Calculates the balance of a given wallet address using the stateful ledger.
    */
   public getBalanceOfAddress(address: string): number {
-    let balance = 0;
-
-    for (const block of this.chain) {
-      for (const trans of block.transactions) {
-        // If money is sent FROM the address, decrease balance
-        if (trans.fromAddress === address) {
-          balance -= trans.amount;
-        }
-
-        // If money is sent TO the address, increase balance
-        if (trans.toAddress === address) {
-          balance += trans.amount;
-        }
-      }
-    }
-
-    return balance;
+    return this.ledger.get(address) || 0;
   }
 
   /**
@@ -289,6 +308,9 @@ export class Blockchain {
     Logger.log('Replacing blockchain with the longer chain from peer.');
     this.chain = hydratedChain;
     this.miningReward = NETWORK_CONSTANTS.calculateMiningReward(this.chain.length);
+
+    // Rebuild the stateful ledger for the new chain
+    this.ledger = this.getLedger();
 
     // Rebuild signature set for the new chain
     this.knownSignatures.clear();

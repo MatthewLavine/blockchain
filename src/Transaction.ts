@@ -30,7 +30,7 @@ export class Transaction {
   public calculateHash(): string {
     return crypto
       .createHash('sha256')
-      .update(this.fromAddress + this.toAddress + this.amount + this.timestamp)
+      .update(`${this.fromAddress}|${this.toAddress}|${this.amount}|${this.timestamp}`)
       .digest('hex');
   }
 
