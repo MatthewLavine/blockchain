@@ -1,4 +1,4 @@
-import { RefreshCcw, Sun, Moon, Trash2, Users, Plus } from 'lucide-react';
+import { RefreshCcw, Sun, Moon, Trash2, Users, Plus, Code } from 'lucide-react';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -68,6 +68,16 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetch
           <Trash2 size={18} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Reset</span>
         </button>
+        <a 
+          href="https://github.com/MatthewLavine/blockchain" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="glass-card"
+          style={{ padding: '10px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', color: 'var(--text-primary)', textDecoration: 'none' }}
+          title="View on GitHub"
+        >
+          <Code size={20} style={{ color: 'var(--accent-primary)' }} />
+        </a>
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
           className="glass-card"
