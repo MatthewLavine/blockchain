@@ -50,7 +50,7 @@ export function useBlockchain() {
     if (!walletAddress) return;
     const startTime = Date.now();
     if (!silent) setIsLoading(true);
-    
+
     try {
       const [blocksRes, balanceRes, pendingRes, peersRes] = await Promise.all([
         axios.get(`${API_BASE}/blocks`),
@@ -101,9 +101,9 @@ export function useBlockchain() {
       // Convert user input (AGC) to atomic units for the backend
       const atomicAmount = Math.round(amount * UNITS_PER_COIN);
       const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, timestamp };
-      
-      const hash = SHA256(tx.fromAddress + tx.toAddress + tx.amount + tx.timestamp).toString();
-      const signature = keyPair.sign(hash).toDER('hex');
+
+      const hash = SHA256(`${tx.fromAddress}|${tx.toAddress}|${tx.amount}|${tx.timestamp}`).toString();
+      const signature = keyPair.sign(hash, 'hex').toDER('hex');
 
       await axios.post(`${API_BASE}/transaction`, { ...tx, signature });
       setSuccess('Transaction submitted to the pending pool!');

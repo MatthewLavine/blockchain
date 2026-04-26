@@ -49,7 +49,7 @@ export class Transaction {
     const hashTx = this.calculateHash();
     
     // 3. Create the cryptographic signature
-    const sig = signingKey.sign(hashTx, 'base64');
+    const sig = signingKey.sign(hashTx, 'hex');
     
     // 4. Store the signature in DER format (a standard way to represent signatures)
     this.signature = sig.toDER('hex');
@@ -77,7 +77,7 @@ export class Transaction {
     const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
     
     // We check if the signature we stored was created by this public key for this specific transaction hash
-    return publicKey.verify(this.calculateHash(), this.signature);
+    return publicKey.verify(this.calculateHash(), this.signature, 'hex');
   }
 
   /**

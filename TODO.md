@@ -75,3 +75,11 @@
 - [ ] **P2P Connection Quotas**: Implement `MAX_PEERS` limits and random peer selection to prevent connection flooding.
 - [ ] **O(1) Balance Lookups**: Replace $O(N)$ chain scanning with a dedicated Balance Map or UTXO set for instant lookups.
 - [ ] **Mempool Expiry**: Automatically evict transactions from the mempool if they are older than 24 hours.
+
+## Phase 13: Security Audit Remediation
+- [ ] **Account Nonces**: Implement per-wallet incrementing nonces to prevent all forms of transaction replay.
+- [ ] **Lightweight Sync**: Validate block headers and PoW before hydrating full block data during chain synchronization.
+- [ ] **Authenticated Peer Handshake**: Implement a basic handshake (e.g., PoW challenge) to deter Sybil/flooding attacks.
+- [ ] **Gossip Rate Limiting**: Limit the number of peer recommendations accepted per node per hour.
+- [ ] **Mining Authorization**: Require a signature or local configuration check before allowing remote `POST /mine` requests to use node resources.
+- [ ] **Wallet Persistence**: Allow users to save/load their private keys from local storage instead of regenerating on every refresh.
