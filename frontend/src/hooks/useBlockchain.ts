@@ -82,8 +82,9 @@ export function useBlockchain() {
   const sendTransaction = async (recipient: string, amount: number) => {
     if (!keyPair || !recipient || !amount) return false;
     try {
-      const tx = { fromAddress: walletAddress, toAddress: recipient, amount };
-      const hash = SHA256(tx.fromAddress + tx.toAddress + tx.amount).toString();
+      const timestamp = Date.now();
+      const tx = { fromAddress: walletAddress, toAddress: recipient, amount, timestamp };
+      const hash = SHA256(tx.fromAddress + tx.toAddress + tx.amount + tx.timestamp).toString();
       const signature = keyPair.sign(hash).toDER('hex');
 
       await axios.post(`${API_BASE}/transaction`, { ...tx, signature });

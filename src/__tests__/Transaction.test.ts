@@ -61,8 +61,9 @@ describe('Transaction', () => {
   test('fromObject() correctly hydrates all fields including timestamp', () => {
     const ts = 1700000000000;
     const original = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 42);
+    original.timestamp = ts; // Set timestamp BEFORE signing
     original.signTransaction(sender);
-    const plain = { ...original, timestamp: ts };
+    const plain = JSON.parse(JSON.stringify(original));
 
     const hydrated = Transaction.fromObject(plain);
     expect(hydrated.fromAddress).toBe(original.fromAddress);

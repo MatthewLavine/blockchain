@@ -102,7 +102,7 @@ export class P2PServer {
                 break;
 
             case MessageType.BROADCAST_TRANSACTION:
-                this.handleTransactionBroadcast(message.data);
+                this.handleTransactionBroadcast(socket, message.data);
                 break;
 
             case MessageType.QUERY_PEERS:
@@ -200,22 +200,26 @@ export class P2PServer {
         }
     }
 
-    private handleTransactionBroadcast(data: Record<string, any>): void {
+    private handleTransactionBroadcast(socket: WebSocket, data: Record<string, any>): void {
         try {
             const tx = Transaction.fromObject(data);
             this.blockchain.createTransaction(tx);
-            // Re-broadcast to other peers
-            this.broadcast({ type: MessageType.BROADCAST_TRANSACTION, data: tx });
+            // Re-broadcast to other peers, except the one we received it from
+            this.broadcast({ type: MessageType.BROADCAST_TRANSACTION, data: tx }, socket);
         } catch (err) {
             // Transaction might already be in mempool or is invalid, ignore
         }
     }
 
     /**
-     * Broadcast a message to ALL connected peers
+     * Broadcast a message to ALL connected peers, optionally excluding one
      */
-    public broadcast(message: P2PMessage): void {
-        this.sockets.forEach(socket => this.write(socket, message));
+    public broadcast(message: P2PMessage, excludeSocket?: WebSocket): void {
+        this.sockets.forEach(socket => {
+            if (socket !== excludeSocket) {
+                this.write(socket, message);
+            }
+        });
     }
 
     public broadcastLatest(): void {

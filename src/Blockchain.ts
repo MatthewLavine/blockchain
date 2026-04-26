@@ -148,6 +148,10 @@ export class Blockchain {
       throw new Error('Cannot add invalid transaction to chain');
     }
 
+    if (this.mempool.containsTransaction(transaction)) {
+      throw new Error('Duplicate transaction: This transaction is already in the pending pool.');
+    }
+
     // Prevent sending more than the wallet has!
     // We must calculate the balance based on the mined chain PLUS the pending transactions they've already submitted.
     let currentBalance = this.getBalanceOfAddress(transaction.fromAddress);

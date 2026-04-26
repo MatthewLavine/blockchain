@@ -15,6 +15,13 @@ export class Mempool {
     }
 
     /**
+     * Checks if a transaction is already in the pool
+     */
+    public containsTransaction(transaction: Transaction): boolean {
+        return this.transactions.some(tx => tx.signature === transaction.signature);
+    }
+
+    /**
      * Returns all transactions currently in the pool
      */
     public getTransactions(): Transaction[] {
