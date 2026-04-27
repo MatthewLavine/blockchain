@@ -34,6 +34,7 @@ services:
       - PORT=7000
       - P2P_PORT=6000
       - P2P_HOST=node1
+      - MAX_PEERS=5
     volumes:
       - ./data/node1:/app/data
     networks:
@@ -62,6 +63,7 @@ services:
       - P2P_PORT=6000
       - P2P_HOST=node2
       - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
     volumes:
       - ./data/node2:/app/data
     depends_on:
@@ -93,6 +95,7 @@ services:
       - P2P_PORT=6000
       - P2P_HOST=node3
       - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
     volumes:
       - ./data/node3:/app/data
     depends_on:
@@ -124,6 +127,7 @@ services:
       - P2P_PORT=6000
       - P2P_HOST=node4
       - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
     volumes:
       - ./data/node4:/app/data
     depends_on:
@@ -155,8 +159,169 @@ services:
       - P2P_PORT=6000
       - P2P_HOST=node5
       - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
     volumes:
       - ./data/node5:/app/data
+    depends_on:
+      node1:
+        condition: service_healthy
+    networks:
+      - blockchain-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
+
+  node6:
+    build: .
+    ports:
+      - "7005:7000"
+      - "6005:6000"
+    environment:
+      - PORT=7000
+      - P2P_PORT=6000
+      - P2P_HOST=node6
+      - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
+    volumes:
+      - ./data/node6:/app/data
+    depends_on:
+      node1:
+        condition: service_healthy
+    networks:
+      - blockchain-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
+
+  node7:
+    build: .
+    ports:
+      - "7006:7000"
+      - "6006:6000"
+    environment:
+      - PORT=7000
+      - P2P_PORT=6000
+      - P2P_HOST=node7
+      - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
+    volumes:
+      - ./data/node7:/app/data
+    depends_on:
+      node1:
+        condition: service_healthy
+    networks:
+      - blockchain-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
+
+  node8:
+    build: .
+    ports:
+      - "7007:7000"
+      - "6007:6000"
+    environment:
+      - PORT=7000
+      - P2P_PORT=6000
+      - P2P_HOST=node8
+      - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
+    volumes:
+      - ./data/node8:/app/data
+    depends_on:
+      node1:
+        condition: service_healthy
+    networks:
+      - blockchain-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
+
+  node9:
+    build: .
+    ports:
+      - "7008:7000"
+      - "6008:6000"
+    environment:
+      - PORT=7000
+      - P2P_PORT=6000
+      - P2P_HOST=node9
+      - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
+    volumes:
+      - ./data/node9:/app/data
+    depends_on:
+      node1:
+        condition: service_healthy
+    networks:
+      - blockchain-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          action: rebuild
+
+  node10:
+    build: .
+    ports:
+      - "7009:7000"
+      - "6009:6000"
+    environment:
+      - PORT=7000
+      - P2P_PORT=6000
+      - P2P_HOST=node10
+      - SEED_NODE=ws://node1:6000
+      - MAX_PEERS=5
+    volumes:
+      - ./data/node10:/app/data
     depends_on:
       node1:
         condition: service_healthy

@@ -20,13 +20,6 @@ let myCoin = new Blockchain();
 myCoin.setStoragePath(port); // Enable disk persistence
 const p2pServer = new P2PServer(myCoin);
 
-// Auto-connect to seed node if provided
-const seedNode = process.env.SEED_NODE;
-if (seedNode) {
-  Logger.log(`Connecting to seed node: ${seedNode}`);
-  p2pServer.connectToSeed(seedNode);
-}
-
 /**
  * Returns the entire blockchain
  */
@@ -77,9 +70,9 @@ app.post('/reset', (req, res) => {
     p2pServer.broadcastReset();
     res.json({ message: 'Blockchain has been reset successfully.' });
   } else {
-    res.status(403).json({ 
-      error: 'Reset forbidden', 
-      message: 'The reset functionality is disabled on this node for security.' 
+    res.status(403).json({
+      error: 'Reset forbidden',
+      message: 'The reset functionality is disabled on this node for security.'
     });
   }
 });
@@ -141,6 +134,13 @@ app.post('/mine', (req, res) => {
 const server = app.listen(port, () => {
   Logger.log(`Blockchain Node listening at http://localhost:${port}`);
   p2pServer.listen(Number(p2pPort), p2pHost);
+
+  // Auto-connect to seed node if provided
+  const seedNode = process.env.SEED_NODE;
+  if (seedNode) {
+    Logger.log(`Connecting to seed node: ${seedNode}`);
+    p2pServer.connectToSeed(seedNode);
+  }
 });
 
 /**
