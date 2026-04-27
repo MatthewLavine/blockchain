@@ -376,8 +376,10 @@ export class P2PServer {
         if (address) {
             const remaining = this.sockets.some(s => s.peerAddress === address);
             if (!remaining) {
-                this.peerUrls.delete(address);
-                Logger.log(`Peer disconnected: ${address}. Total unique peers: ${this.getPeers().length}`);
+                const wasDeleted = this.peerUrls.delete(address);
+                if (wasDeleted) {
+                    Logger.log(`Peer disconnected: ${address}. Total unique peers: ${this.getPeers().length}`);
+                }
             }
         }
     }
