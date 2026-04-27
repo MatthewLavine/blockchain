@@ -6,7 +6,7 @@ import { P2PServer } from './P2PServer';
 import { Logger } from './Logger';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 7000;
 Logger.initialize(port);
 const p2pPort = process.env.P2P_PORT || 6000;
 const p2pHost = process.env.P2P_HOST || 'localhost';

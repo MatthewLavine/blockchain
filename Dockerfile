@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Expose the API and P2P ports
-EXPOSE 3000
+EXPOSE 7000
 EXPOSE 6000
 
 # Start the node

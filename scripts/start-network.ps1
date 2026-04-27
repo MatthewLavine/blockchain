@@ -2,7 +2,7 @@ param (
     [int]$Nodes = 5
 )
 
-$BasePort = 3000
+$BasePort = 7000
 $BaseP2P = 6000
 
 Write-Host "🚀 Launching Antigravity Chain Network with $Nodes nodes..." -ForegroundColor Cyan

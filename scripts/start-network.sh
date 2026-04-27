@@ -2,7 +2,7 @@
 
 # Number of nodes to start (default to 5)
 NODES=${1:-5}
-BASE_PORT=3000
+BASE_PORT=7000
 BASE_P2P=6000
 
 echo "🚀 Launching Antigravity Chain Network with $NODES nodes..."

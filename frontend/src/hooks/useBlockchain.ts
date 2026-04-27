@@ -4,7 +4,7 @@ import { ec as EC } from 'elliptic';
 import SHA256 from 'crypto-js/sha256';
 
 const ec = new EC('secp256k1');
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:7000';
 const UNITS_PER_COIN = 1000000;
 
 export interface Transaction {
