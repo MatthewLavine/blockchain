@@ -41,6 +41,9 @@ export class P2PServer {
     private heartbeatInterval: NodeJS.Timeout | null = null;
     private HEARTBEAT_DELAY = 5000; // 5 seconds
     private MAX_MISSED_PINGS = 3;
+    private seedNode: string | null = null;
+    private reconnectInterval: NodeJS.Timeout | null = null;
+    private RECONNECT_DELAY = 10000; // 10 seconds
 
     constructor(blockchain: Blockchain) {
         this.blockchain = blockchain;
@@ -77,9 +80,26 @@ export class P2PServer {
             this.initConnection(socket);
         });
         socket.on('error', (err) => {
-            Logger.log('P2P Connection failed:', err.message);
+            Logger.log(`P2P Connection to ${peerUrl} failed:`, err.message);
             this.peerUrls.delete(peerUrl);
         });
+    }
+
+    /**
+     * Connect to a seed node and enable auto-reconnect if it fails
+     */
+    public connectToSeed(seedUrl: string): void {
+        this.seedNode = seedUrl;
+        this.connectToPeer(seedUrl);
+
+        if (!this.reconnectInterval) {
+            this.reconnectInterval = setInterval(() => {
+                if (this.sockets.length === 0 && this.seedNode) {
+                    Logger.log('No active peers. Attempting to reconnect to seed node...');
+                    this.connectToPeer(this.seedNode);
+                }
+            }, this.RECONNECT_DELAY);
+        }
     }
 
     private initConnection(socket: P2PSocket): void {
@@ -386,6 +406,11 @@ export class P2PServer {
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
             this.heartbeatInterval = null;
+        }
+
+        if (this.reconnectInterval) {
+            clearInterval(this.reconnectInterval);
+            this.reconnectInterval = null;
         }
 
         if (this.wss) {

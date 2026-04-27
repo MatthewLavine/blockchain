@@ -24,7 +24,7 @@ const p2pServer = new P2PServer(myCoin);
 const seedNode = process.env.SEED_NODE;
 if (seedNode) {
   Logger.log(`Connecting to seed node: ${seedNode}`);
-  p2pServer.connectToPeer(seedNode);
+  p2pServer.connectToSeed(seedNode);
 }
 
 /**
