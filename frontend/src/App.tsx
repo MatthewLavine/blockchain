@@ -33,7 +33,12 @@ function App() {
     addPeer,
     resetChain,
     peers,
-    miningReward
+    miningReward,
+    walletType,
+    hasSavedWallet,
+    generateSavedWallet,
+    generateTemporaryWallet,
+    loadSavedWallet
   } = useBlockchain();
 
   useEffect(() => {
@@ -96,7 +101,15 @@ function App() {
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 350px', gap: '20px', alignItems: 'start' }}>
         {/* Column 1: My Wallet & Actions */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <WalletCard address={walletAddress} balance={balance} />
+          <WalletCard 
+            address={walletAddress} 
+            balance={balance} 
+            walletType={walletType}
+            hasSavedWallet={hasSavedWallet}
+            generateSavedWallet={generateSavedWallet}
+            generateTemporaryWallet={generateTemporaryWallet}
+            loadSavedWallet={loadSavedWallet}
+          />
           <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
           <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} />
         </section>

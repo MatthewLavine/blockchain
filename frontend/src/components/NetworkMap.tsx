@@ -107,7 +107,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
             borderRadius: '12px',
             overflow: 'hidden',
             border: '1px solid var(--glass-border)',
-            background: 'rgba(0, 0, 0, 0.2)',
+            background: 'var(--input-bg)',
             marginBottom: '20px',
             position: 'relative'
           }}

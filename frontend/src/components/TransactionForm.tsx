@@ -35,7 +35,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
             placeholder="Recipient Address" 
             value={recipient}
             onChange={(e) => setRecipient(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
           />
         </div>
         <div style={{ position: 'relative' }}>
@@ -44,7 +44,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
             placeholder="Amount" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
+            style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
           />
           <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>AGC</span>
         </div>

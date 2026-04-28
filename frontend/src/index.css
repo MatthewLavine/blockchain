@@ -9,11 +9,14 @@
   --accent-secondary: #a855f7;
   --accent-success: #34d399;
   --accent-error: #f87171;
+  --accent-warning: #fbbf24;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --body-gradient: radial-gradient(circle at top right, #1e1b4b, #0a0b10 40%);
   --table-header-bg: rgba(20, 22, 32, 0.8);
   --modal-overlay: rgba(0, 0, 0, 0.7);
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --glass-bg-darker: rgba(0, 0, 0, 0.3);
   
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -40,6 +43,9 @@
   --modal-overlay: rgba(255, 255, 255, 0.6);
   --accent-success: #059669;
   --accent-error: #dc2626;
+  --accent-warning: #d97706;
+  --input-bg: rgba(0, 0, 0, 0.05);
+  --glass-bg-darker: rgba(0, 0, 0, 0.08);
 }
 
 * {

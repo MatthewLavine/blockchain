@@ -30,6 +30,8 @@ export function useBlockchain() {
   const [keyPair, setKeyPair] = useState<any>(null);
   const [walletAddress, setWalletAddress] = useState('');
   const [balance, setBalance] = useState(0);
+  const [walletType, setWalletType] = useState<'saved' | 'temporary'>('saved');
+  const [hasSavedWallet, setHasSavedWallet] = useState(false);
 
   // Blockchain State
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -51,9 +53,50 @@ export function useBlockchain() {
 
   // Initialize Wallet
   useEffect(() => {
+    const savedPrivateKey = localStorage.getItem('walletPrivateKey');
+    if (savedPrivateKey) {
+      const key = ec.keyFromPrivate(savedPrivateKey);
+      setKeyPair(key);
+      setWalletAddress(key.getPublic('hex'));
+      setWalletType('saved');
+      setHasSavedWallet(true);
+    } else {
+      const key = ec.genKeyPair();
+      localStorage.setItem('walletPrivateKey', key.getPrivate('hex'));
+      setKeyPair(key);
+      setWalletAddress(key.getPublic('hex'));
+      setWalletType('saved');
+      setHasSavedWallet(true);
+    }
+  }, []);
+
+  const generateSavedWallet = useCallback(() => {
+    const key = ec.genKeyPair();
+    localStorage.setItem('walletPrivateKey', key.getPrivate('hex'));
+    setKeyPair(key);
+    setWalletAddress(key.getPublic('hex'));
+    setWalletType('saved');
+    setHasSavedWallet(true);
+    setBalance(0);
+  }, []);
+
+  const generateTemporaryWallet = useCallback(() => {
     const key = ec.genKeyPair();
     setKeyPair(key);
     setWalletAddress(key.getPublic('hex'));
+    setWalletType('temporary');
+    setBalance(0);
+  }, []);
+
+  const loadSavedWallet = useCallback(() => {
+    const savedPrivateKey = localStorage.getItem('walletPrivateKey');
+    if (savedPrivateKey) {
+      const key = ec.keyFromPrivate(savedPrivateKey);
+      setKeyPair(key);
+      setWalletAddress(key.getPublic('hex'));
+      setWalletType('saved');
+      setBalance(0);
+    }
   }, []);
 
   const fetchData = useCallback(async (silent = false) => {
@@ -196,6 +239,11 @@ export function useBlockchain() {
     mineBlock,
     addPeer,
     resetChain,
-    miningReward
+    miningReward,
+    walletType,
+    hasSavedWallet,
+    generateSavedWallet,
+    generateTemporaryWallet,
+    loadSavedWallet
   };
 }
