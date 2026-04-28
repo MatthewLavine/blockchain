@@ -67,7 +67,7 @@
 ## Phase 11: Network Evolution (Next Up!)
 - [ ] **Dynamic Difficulty**: Adjust mining difficulty based on block time (The "Bitcoin" Update).
 - [ ] **Transaction Fees**: Implement priority fees for transactions in the mempool.
-- [ ] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
+- [x] **Chain Visualization**: Add a visual "Graph" view to the Network Map showing connections between nodes.
 
 ## Phase 12: Stability & Enterprise Hardening
 - [ ] **Atomic Persistence**: Use "Write-to-Temp then Rename" pattern for blockchain storage to prevent corruption on crash.
@@ -82,4 +82,4 @@
 - [ ] **Authenticated Peer Handshake**: Implement a basic handshake (e.g., PoW challenge) to deter Sybil/flooding attacks.
 - [ ] **Gossip Rate Limiting**: Limit the number of peer recommendations accepted per node per hour.
 - [ ] **Mining Authorization**: Require a signature or local configuration check before allowing remote `POST /mine` requests to use node resources.
-- [ ] **Wallet Persistence**: Allow users to save/load their private keys from local storage instead of regenerating on every refresh.
+- [x] **Wallet Persistence**: Allow users to save/load their private keys from local storage instead of regenerating on every refresh.

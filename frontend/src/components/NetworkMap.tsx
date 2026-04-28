@@ -21,14 +21,14 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
 
   const graphData = useMemo(() => {
     const nodes = [
-      { id: 'Local Node', name: 'This Node', group: 1, val: 8, color: '#6366f1' },
-      ...uniquePeers.map(peer => ({ id: peer, name: peer.replace('ws://', ''), group: 2, val: 4, color: '#10b981' }))
+      { id: 'Local Node', name: 'This Node', group: 1, val: 8, color: 'var(--accent-primary)' },
+      ...uniquePeers.map(peer => ({ id: peer, name: peer.replace('ws://', ''), group: 2, val: 4, color: 'var(--accent-success)' }))
     ];
 
     const links = uniquePeers.map(peer => ({
       source: 'Local Node',
       target: peer,
-      color: 'rgba(99, 102, 241, 0.4)'
+      color: 'var(--glass-border)'
     }));
 
     return { nodes, links };
@@ -198,7 +198,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
             uniquePeers.map((peer, i) => (
               <div key={i} className="glass-card" style={{
                 padding: '12px',
-                background: 'rgba(255,255,255,0.02)',
+                background: 'var(--input-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',

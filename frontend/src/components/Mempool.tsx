@@ -1,5 +1,5 @@
-import React from 'react';
 import { Layers, Send, ArrowRight } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Transaction } from '../hooks/useBlockchain';
 
 interface MempoolProps {
@@ -8,6 +8,15 @@ interface MempoolProps {
 }
 
 export const Mempool: React.FC<MempoolProps> = ({ transactions, onTransactionClick }) => {
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: transactions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 70, // Approximate height + gap
+    overscan: 5,
+  });
+
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -29,42 +38,75 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions, onTransactionCli
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
+      <div ref={parentRef} style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto', flex: 1, paddingRight: '8px' }}>
         {transactions.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
+          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px', background: 'var(--input-bg)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
             No pending transactions. All clear!
           </p>
         ) : (
-          transactions.map((tx, i) => (
-            <div 
-              key={i} 
-              onClick={() => onTransactionClick(tx)}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: '6px', 
-                padding: '10px', 
-                background: 'rgba(99, 102, 241, 0.05)', 
-                borderRadius: '10px', 
-                border: '1px solid rgba(99, 102, 241, 0.2)',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  <Send size={14} />
-                  <span>{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const tx = transactions[virtualRow.index];
+              return (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: '10px'
+                  }}
+                >
+                  <div 
+                    onClick={() => onTransactionClick(tx)}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      gap: '12px', 
+                      padding: '10px', 
+                      background: 'rgba(99, 102, 241, 0.05)', 
+                      borderRadius: '10px', 
+                      border: '1px solid rgba(99, 102, 241, 0.2)',
+                      cursor: 'pointer',
+                      height: '100%'
+                    }}
+                  >
+                    <div style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px', 
+                      flexShrink: 0,
+                      background: 'rgba(99, 102, 241, 0.1)',
+                      color: 'var(--accent-primary)'
+                    }}>
+                      <Send size={16} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: '2px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                          {Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC
+                        </div>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'var(--input-bg)', padding: '2px 6px', borderRadius: '4px' }}>Pending</span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                        <span style={{ fontFamily: 'monospace' }}>{tx.fromAddress?.substring(0, 6)}...</span>
+                        <ArrowRight size={12} />
+                        <span style={{ fontFamily: 'monospace' }}>{tx.toAddress.substring(0, 6)}...</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>Pending</span>
-              </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                <span style={{ fontFamily: 'monospace' }}>{tx.fromAddress?.substring(0, 6)}...</span>
-                <ArrowRight size={12} />
-                <span style={{ fontFamily: 'monospace' }}>{tx.toAddress.substring(0, 6)}...</span>
-              </div>
-            </div>
-          ))
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
