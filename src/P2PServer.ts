@@ -33,6 +33,11 @@ interface P2PSocket extends WebSocket {
     isAccepted?: boolean;
 }
 
+interface FailureInfo {
+    timestamp: number;
+    count: number;
+}
+
 export class P2PServer {
     private sockets: P2PSocket[] = [];
     private peerUrls: Set<string> = new Set();
@@ -48,7 +53,7 @@ export class P2PServer {
     private MAX_INBOUND_PEERS = Number(process.env.MAX_PEERS) || 10;
     private MAX_OUTBOUND_PEERS = Number(process.env.MAX_OUTBOUND_PEERS) || Math.max(2, Math.floor(this.MAX_INBOUND_PEERS * 0.5));
     private connectingPeers: Set<string> = new Set();
-    private recentFailures: Map<string, number> = new Map();
+    private recentFailures: Map<string, FailureInfo> = new Map();
 
     constructor(blockchain: Blockchain) {
         this.blockchain = blockchain;
@@ -75,8 +80,8 @@ export class P2PServer {
         if (peerUrl === this.myAddress) return;
 
         // Respect the 30-second cooldown for recently failed peers
-        const lastFailure = this.recentFailures.get(peerUrl) || 0;
-        if (Date.now() - lastFailure < 30000) return;
+        const failureInfo = this.recentFailures.get(peerUrl);
+        if (failureInfo && Date.now() - failureInfo.timestamp < 30000) return;
 
         const outboundSockets = this.sockets.filter(s => s.isOutgoing).length;
         const pendingCount = this.connectingPeers.size;
@@ -91,23 +96,58 @@ export class P2PServer {
         this.connectingPeers.add(peerUrl);
         this.peerUrls.add(peerUrl);
 
-        const socket = new WebSocket(peerUrl) as P2PSocket;
-        socket.isOutgoing = true;
-        socket.peerAddress = peerUrl;
+        try {
+            const socket = new WebSocket(peerUrl) as P2PSocket;
+            socket.isOutgoing = true;
+            socket.peerAddress = peerUrl;
 
-        socket.on('open', () => {
-            this.initConnection(socket);
-        });
+            socket.on('open', () => {
+                this.initConnection(socket);
+                // Success! Clear failures for this address
+                this.recentFailures.delete(peerUrl);
+            });
 
-        socket.on('error', (err) => {
+            socket.on('error', (err) => {
+                this.connectingPeers.delete(peerUrl);
+                Logger.error(`P2P: Connection error to ${peerUrl}: ${err.message}`);
+                // Only handle failure here if it never reached initConnection
+                if (!this.sockets.includes(socket)) {
+                    this.handleSocketClose(peerUrl);
+                }
+            });
+
+            socket.on('close', (code, reason) => {
+                // If it was already added to this.sockets, removeSocket will handle it.
+                // Otherwise (failed to open), we handle it here.
+                if (!this.sockets.includes(socket)) {
+                    this.handleSocketClose(peerUrl, code, reason?.toString());
+                }
+            });
+        } catch (err: any) {
             this.connectingPeers.delete(peerUrl);
-        });
+            throw new Error(`Invalid WebSocket URL: ${err.message}`);
+        }
+    }
 
-        socket.on('close', () => {
-            this.connectingPeers.delete(peerUrl);
-            this.recentFailures.set(peerUrl, Date.now());
-            this.seekNewPeers();
-        });
+    /**
+     * Centralized socket close handler to track failures and prune dead peers
+     */
+    private handleSocketClose(peerUrl: string, code?: number, reason?: string): void {
+        this.connectingPeers.delete(peerUrl);
+
+        const failureInfo = this.recentFailures.get(peerUrl) || { timestamp: 0, count: 0 };
+        failureInfo.timestamp = Date.now();
+        failureInfo.count++;
+        this.recentFailures.set(peerUrl, failureInfo);
+
+        const MAX_RETRIES = 3;
+        if (failureInfo.count >= MAX_RETRIES) {
+            Logger.log(`P2P: Pruning dead peer ${peerUrl} after ${failureInfo.count} failed attempts.`);
+            this.peerUrls.delete(peerUrl);
+            this.recentFailures.delete(peerUrl);
+        }
+
+        this.seekNewPeers();
     }
 
     /**
@@ -494,8 +534,7 @@ export class P2PServer {
         const address = socket.peerAddress;
 
         if (address) {
-            this.connectingPeers.delete(address);
-            this.recentFailures.set(address, Date.now());
+            this.handleSocketClose(address);
 
             // Only log if this was an established peer and no other sockets for this address remain.
             // We only log if the peer had graduated from the grace period (isAccepted).
@@ -504,10 +543,6 @@ export class P2PServer {
                 Logger.log(`P2P: Peer disconnected: ${address}. Total active peers: ${this.sockets.length}`);
             }
         }
-
-        // Waterfall discovery: When a socket closes (whether failure or graceful rejection),
-        // an outbound slot might have freed up. Immediately try to fill it.
-        this.seekNewPeers();
     }
 
     public getPeers(): string[] {

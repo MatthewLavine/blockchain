@@ -147,8 +147,27 @@ app.post('/addPeer', (req, res) => {
   if (!peerUrl) {
     return res.status(400).json({ error: 'Missing required field: peer in JSON body' });
   }
-  p2pServer.connectToPeer(peerUrl);
-  res.json({ message: `Attempting to connect to peer: ${peerUrl}` });
+
+  // Basic URL validation
+  try {
+    const url = new URL(peerUrl);
+    if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
+      throw new Error('Peer URL must use ws:// or wss:// protocol');
+    }
+  } catch (err: any) {
+    return res.status(400).json({ 
+      error: 'Invalid peer URL', 
+      message: err.message 
+    });
+  }
+
+  try {
+    p2pServer.connectToPeer(peerUrl);
+    res.json({ message: `Attempting to connect to peer: ${peerUrl}` });
+  } catch (error: any) {
+    Logger.error(`Failed to initiate connection to ${peerUrl}: ${error.message}`);
+    res.status(500).json({ error: 'Failed to initiate connection', message: error.message });
+  }
 });
 
 /**
