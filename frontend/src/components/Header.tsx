@@ -1,23 +1,16 @@
-import { RefreshCcw, Sun, Moon, Trash2, Users, Plus, Code } from 'lucide-react';
+import { RefreshCcw, Sun, Moon, Users, Plus, Code } from 'lucide-react';
 
 interface HeaderProps {
   isDarkMode: boolean;
   setIsDarkMode: (val: boolean) => void;
   fetchData: (silent?: boolean) => void;
-  resetChain: () => void;
   peers: string[];
   onPeersClick: () => void;
   addPeer: (url: string) => void;
   isLoading: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, resetChain, peers, onPeersClick, addPeer, isLoading }) => {
-  const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset the entire blockchain? This cannot be undone.')) {
-      resetChain();
-    }
-  };
-
+export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetchData, peers, onPeersClick, addPeer, isLoading }) => {
   const handleAddPeer = () => {
     const url = window.prompt('Enter Peer WebSocket URL (e.g., ws://localhost:6001):');
     if (url) addPeer(url);
@@ -58,15 +51,6 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, setIsDarkMode, fetch
         >
           <Plus size={18} style={{ color: 'var(--accent-primary)' }} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Connect</span>
-        </button>
-        <button
-          onClick={handleReset}
-          className="glass-card"
-          style={{ padding: '10px 16px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', color: '#ef4444' }}
-          title="Reset Blockchain"
-        >
-          <Trash2 size={18} />
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Reset</span>
         </button>
         <a 
           href="https://github.com/MatthewLavine/blockchain" 

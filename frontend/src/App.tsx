@@ -31,7 +31,6 @@ function App() {
     sendTransaction,
     mineBlock,
     addPeer,
-    resetChain,
     peers,
     miningReward,
     walletType,
@@ -51,7 +50,6 @@ function App() {
         isDarkMode={isDarkMode} 
         setIsDarkMode={setIsDarkMode} 
         fetchData={fetchData} 
-        resetChain={resetChain}
         peers={peers}
         onPeersClick={() => setIsNetworkModalOpen(true)}
         addPeer={addPeer}
