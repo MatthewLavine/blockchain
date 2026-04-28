@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 import { getLandingPage } from './LandingPage';
 
 const app = express();
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 const port = process.env.PORT || 7000;
 Logger.initialize(port);
 const p2pPort = process.env.P2P_PORT || 6000;
