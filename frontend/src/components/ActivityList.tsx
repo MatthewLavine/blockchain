@@ -1,5 +1,6 @@
 import React from 'react';
 import { History, Cpu, Send } from 'lucide-react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Block } from '../hooks/useBlockchain';
 
 interface ActivityListProps {
@@ -13,6 +14,15 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
     .flatMap(b => b.transactions)
     .filter(tx => tx.fromAddress === walletAddress || tx.toAddress === walletAddress);
 
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: transactions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 80, // Approximate height + gap
+    overscan: 5,
+  });
+
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -22,51 +32,67 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
         <h2 style={{ fontSize: '1.25rem' }}>Recent Activity</h2>
       </div>
 
-      <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '8px' }}>
+      <div ref={parentRef} style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', flex: 1, paddingRight: '8px' }}>
         {transactions.length === 0 ? (
           <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No transactions found for this wallet.</p>
         ) : (
-          transactions.map((tx, i) => {
-            const isSent = tx.fromAddress === walletAddress;
-            const isMiningReward = tx.fromAddress === null;
-            return (
-              <div 
-                key={i} 
-                onClick={() => onTransactionClick(tx)}
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  gap: '6px', 
-                  padding: '10px', 
-                  background: 'rgba(0,0,0,0.1)', 
-                  borderRadius: '10px', 
-                  border: '1px solid var(--glass-border)',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ 
-                      padding: '6px', 
-                      borderRadius: '6px', 
-                      background: isMiningReward ? 'rgba(16, 185, 129, 0.1)' : (isSent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'),
-                      color: isMiningReward ? 'var(--accent-success)' : (isSent ? '#f87171' : 'var(--accent-success)')
-                    }}>
-                      {isMiningReward ? <Cpu size={14} /> : (isSent ? <Send size={14} style={{ transform: 'rotate(-45deg)' }} /> : <Send size={14} style={{ transform: 'rotate(135deg)' }} />)}
+          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const tx = transactions[virtualRow.index];
+              const isSent = tx.fromAddress === walletAddress;
+              const isMiningReward = tx.fromAddress === null;
+              return (
+                <div
+                  key={virtualRow.key}
+                  ref={rowVirtualizer.measureElement}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: '12px'
+                  }}
+                >
+                  <div 
+                    onClick={() => onTransactionClick(tx)}
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      gap: '6px', 
+                      padding: '10px', 
+                      background: 'rgba(0,0,0,0.1)', 
+                      borderRadius: '10px', 
+                      border: '1px solid var(--glass-border)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ 
+                          padding: '6px', 
+                          borderRadius: '6px', 
+                          background: isMiningReward ? 'rgba(16, 185, 129, 0.1)' : (isSent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'),
+                          color: isMiningReward ? 'var(--accent-success)' : (isSent ? '#f87171' : 'var(--accent-success)')
+                        }}>
+                          {isMiningReward ? <Cpu size={14} /> : (isSent ? <Send size={14} style={{ transform: 'rotate(-45deg)' }} /> : <Send size={14} style={{ transform: 'rotate(135deg)' }} />)}
+                        </div>
+                        <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                        {isSent && !isMiningReward ? '-' : '+'}{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)', whiteSpace: 'nowrap' }}>
-                    {isSent && !isMiningReward ? '-' : '+'}{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                    
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', paddingLeft: '30px' }}>
+                      {isSent ? `To: ${tx.toAddress.substring(0, 20)}...` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress?.substring(0, 20)}...`)}
+                    </div>
                   </div>
                 </div>
-                
-                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', paddingLeft: '30px' }}>
-                  {isSent ? `To: ${tx.toAddress.substring(0, 20)}...` : (isMiningReward ? 'System Generation' : `From: ${tx.fromAddress?.substring(0, 20)}...`)}
-                </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
