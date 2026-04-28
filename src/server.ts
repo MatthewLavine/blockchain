@@ -92,7 +92,10 @@ app.get('/peers', (req, res) => {
 });
 
 app.post('/addPeer', (req, res) => {
-  const peerUrl = req.body.peer;
+  const peerUrl = req.body?.peer;
+  if (!peerUrl) {
+    return res.status(400).json({ error: 'Missing required field: peer in JSON body' });
+  }
   p2pServer.connectToPeer(peerUrl);
   res.json({ message: `Attempting to connect to peer: ${peerUrl}` });
 });
@@ -103,7 +106,14 @@ app.post('/addPeer', (req, res) => {
  */
 app.post('/transaction', (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ error: 'Missing request body' });
+    }
     const { fromAddress, toAddress, amount, signature } = req.body;
+
+    if (!fromAddress || !toAddress || amount === undefined || !signature) {
+      return res.status(400).json({ error: 'Missing required transaction fields' });
+    }
 
     // Reconstruct the transaction object
     const tx = Transaction.fromObject(req.body);
@@ -123,10 +133,10 @@ app.post('/transaction', (req, res) => {
  * Expects JSON body: { rewardAddress }
  */
 app.post('/mine', (req, res) => {
-  const { rewardAddress } = req.body;
+  const rewardAddress = req.body?.rewardAddress;
 
   if (!rewardAddress) {
-    return res.status(400).json({ error: 'Mining requires a rewardAddress' });
+    return res.status(400).json({ error: 'Mining requires a rewardAddress in the JSON body' });
   }
 
   try {
@@ -139,6 +149,21 @@ app.post('/mine', (req, res) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
+});
+
+/**
+ * 404 Handler
+ */
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+/**
+ * Global Error Handler
+ */
+app.use((err: any, req: any, res: any, next: any) => {
+  Logger.error(`Unhandled error: ${err.message}`);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const server = app.listen(port, () => {
