@@ -6,6 +6,7 @@ import { P2PServer } from './P2PServer';
 import { Logger } from './Logger';
 
 const app = express();
+app.set('trust proxy', true);
 const port = process.env.PORT || 7000;
 Logger.initialize(port);
 const p2pPort = process.env.P2P_PORT || 6000;
