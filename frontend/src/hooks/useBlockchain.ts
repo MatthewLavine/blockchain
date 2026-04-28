@@ -37,6 +37,7 @@ export function useBlockchain() {
   const [peers, setPeers] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isMining, setIsMining] = useState(false);
+  const [miningReward, setMiningReward] = useState(100);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -61,11 +62,12 @@ export function useBlockchain() {
     if (!silent) setIsLoading(true);
 
     try {
-      const [blocksRes, balanceRes, pendingRes, peersRes] = await Promise.all([
+      const [blocksRes, balanceRes, pendingRes, peersRes, infoRes] = await Promise.all([
         axios.get(`${API_BASE}/blocks`),
         axios.get(`${API_BASE}/balance/${walletAddress}`),
         axios.get(`${API_BASE}/pending`),
-        axios.get(`${API_BASE}/peers`)
+        axios.get(`${API_BASE}/peers`),
+        axios.get(`${API_BASE}/info`)
       ]);
 
       // Convert atomic units back to AGC for display
@@ -85,6 +87,7 @@ export function useBlockchain() {
       })));
 
       setPeers(peersRes.data);
+      setMiningReward(infoRes.data.miningReward / UNITS_PER_COIN);
       setError('');
     } catch (err) {
       if (!silent) setError(handleApiError(err, 'Failed to connect to the blockchain node.'));
@@ -192,6 +195,7 @@ export function useBlockchain() {
     sendTransaction,
     mineBlock,
     addPeer,
-    resetChain
+    resetChain,
+    miningReward
   };
 }

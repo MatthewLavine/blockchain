@@ -4,9 +4,10 @@ import { Cpu } from 'lucide-react';
 interface MiningCardProps {
   mineBlock: () => Promise<void>;
   isMining: boolean;
+  reward: number;
 }
 
-export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining }) => {
+export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, reward }) => {
   return (
     <button 
       onClick={mineBlock} 
@@ -30,7 +31,7 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining }) =
       </div>
       <div style={{ textAlign: 'center' }}>
         <h3 style={{ marginBottom: '2px', fontSize: '1rem', color: 'var(--text-primary)' }}>{isMining ? 'Mining...' : 'Start Mining'}</h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Earn 100 AGC reward</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Earn {reward} AGC reward</p>
       </div>
     </button>
   );

@@ -78,6 +78,17 @@ app.get('/blocks', (req, res) => {
 });
 
 /**
+ * Returns metadata about the blockchain network
+ */
+app.get('/info', (req, res) => {
+  res.json({
+    chainLength: myCoin.chain.length,
+    miningReward: myCoin.miningReward,
+    difficulty: myCoin.difficulty
+  });
+});
+
+/**
  * Health check endpoint
  */
 app.get('/health', (req, res) => {

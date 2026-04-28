@@ -18,6 +18,7 @@ export const getLandingPage = () => {
         <p>> STATUS: ONLINE</p>
         <p>> AVAILABLE_ENDPOINTS:</p>
         <div class="endpoint"><span class="method">GET</span><a href="/blocks">/blocks</a><span class="desc">- Returns the entire blockchain</span></div>
+        <div class="endpoint"><span class="method">GET</span><a href="/info">/info</a><span class="desc">- Returns metadata about the network</span></div>
         <div class="endpoint"><span class="method">GET</span><a href="/health">/health</a><span class="desc">- Node health check</span></div>
         <div class="endpoint"><span class="method">GET</span>/balance/:address<span class="desc">- Get wallet balance</span></div>
         <div class="endpoint"><span class="method">GET</span>/nonce/:address<span class="desc">- Get next expected nonce</span></div>

@@ -32,7 +32,8 @@ function App() {
     mineBlock,
     addPeer,
     resetChain,
-    peers
+    peers,
+    miningReward
   } = useBlockchain();
 
   useEffect(() => {
@@ -97,7 +98,7 @@ function App() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <WalletCard address={walletAddress} balance={balance} />
           <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
-          <MiningCard mineBlock={mineBlock} isMining={isMining} />
+          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} />
         </section>
 
         {/* Column 2: Blockchain Ledger */}
