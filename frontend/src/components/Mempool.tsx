@@ -21,20 +21,20 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions, walletAddress, o
 
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          width: '44px', 
-          height: '44px', 
+          width: '36px', 
+          height: '36px', 
           background: 'rgba(99, 102, 241, 0.1)', 
-          borderRadius: '12px', 
+          borderRadius: '10px', 
           color: 'var(--accent-primary)' 
         }}>
-          <Layers size={24} />
+          <Layers size={18} />
         </div>
-        <h2 style={{ fontSize: '1.25rem' }}>Mempool (Pending)</h2>
+        <h2 style={{ fontSize: '1.1rem' }}>Mempool (Pending)</h2>
         <span style={{ 
           marginLeft: 'auto', 
           background: 'rgba(99, 102, 241, 0.1)', 

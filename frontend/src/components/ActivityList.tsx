@@ -25,20 +25,20 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
 
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          width: '44px', 
-          height: '44px', 
+          width: '36px', 
+          height: '36px', 
           background: 'rgba(99, 102, 241, 0.1)', 
-          borderRadius: '12px', 
+          borderRadius: '10px', 
           color: 'var(--accent-primary)' 
         }}>
-          <History size={24} />
+          <History size={18} />
         </div>
-        <h2 style={{ fontSize: '1.25rem' }}>Recent Activity</h2>
+        <h2 style={{ fontSize: '1.1rem' }}>Recent Activity</h2>
       </div>
 
       <div ref={parentRef} style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', flex: 1, paddingRight: '8px' }}>

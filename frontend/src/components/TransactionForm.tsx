@@ -21,20 +21,20 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
 
   return (
     <div className="glass-card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          width: '44px', 
-          height: '44px', 
+          width: '36px', 
+          height: '36px', 
           background: 'rgba(168, 85, 247, 0.1)', 
-          borderRadius: '12px', 
+          borderRadius: '10px', 
           color: 'var(--accent-secondary)' 
         }}>
-          <Send size={24} />
+          <Send size={18} />
         </div>
-        <h2 style={{ fontSize: '1.1rem' }}>Send Coins</h2>
+        <h2 style={{ fontSize: '1rem' }}>Send Coins</h2>
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

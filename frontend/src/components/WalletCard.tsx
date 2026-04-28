@@ -31,20 +31,20 @@ export const WalletCard: React.FC<WalletCardProps> = ({
 
   return (
     <div className="glass-card" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          width: '44px', 
-          height: '44px', 
+          width: '36px', 
+          height: '36px', 
           background: 'rgba(99, 102, 241, 0.1)', 
-          borderRadius: '12px', 
+          borderRadius: '10px', 
           color: 'var(--accent-primary)' 
         }}>
-          <Wallet size={24} />
+          <Wallet size={18} />
         </div>
-        <h2 style={{ fontSize: '1.1rem' }}>My Wallet</h2>
+        <h2 style={{ fontSize: '1rem' }}>My Wallet</h2>
         
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
           {walletType === 'saved' ? (
