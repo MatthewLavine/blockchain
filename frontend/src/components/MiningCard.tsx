@@ -32,7 +32,7 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <h3 style={{ marginBottom: '2px', fontSize: '1rem', color: 'var(--text-primary)' }}>{isMining ? 'Mining...' : 'Start Mining'}</h3>
+        <h3 style={{ marginBottom: '2px', fontSize: '1rem', color: 'var(--text-primary)' }}>{isMining ? 'Mining...' : 'Mine Next Block'}</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Earn {reward} AGC reward</p>
       </div>
     </button>
