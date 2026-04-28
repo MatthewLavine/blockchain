@@ -21,7 +21,16 @@ export const BlockExplorer: React.FC<BlockExplorerProps> = ({ blocks, onBlockCli
   return (
     <section className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexShrink: 0 }}>
-        <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          width: '44px', 
+          height: '44px', 
+          background: 'rgba(99, 102, 241, 0.1)', 
+          borderRadius: '12px', 
+          color: 'var(--accent-primary)' 
+        }}>
           <Database size={24} />
         </div>
         <h2 style={{ fontSize: '1.25rem' }}>Blockchain Ledger</h2>

@@ -26,8 +26,17 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
         animation: isMining ? 'pulse 2s infinite' : 'none'
       }}
     >
-      <div style={{ padding: '10px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '50%', color: 'var(--accent-success)' }}>
-        <div className={isMining ? 'animate-spin' : ''}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        width: '44px', 
+        height: '44px', 
+        background: 'rgba(16, 185, 129, 0.1)', 
+        borderRadius: '50%', 
+        color: 'var(--accent-success)' 
+      }}>
+        <div className={isMining ? 'animate-spin' : ''} style={{ display: 'flex' }}>
           <Cpu size={24} />
         </div>
       </div>
