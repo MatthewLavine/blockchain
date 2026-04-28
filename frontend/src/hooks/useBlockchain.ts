@@ -40,6 +40,14 @@ export function useBlockchain() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Helper for consistent error handling (including rate limits)
+  const handleApiError = useCallback((err: any, fallback: string) => {
+    if (err.response?.status === 429) {
+      return err.response.data?.error || 'Too many requests. Please slow down.';
+    }
+    return err.response?.data?.error || err.response?.data?.message || fallback;
+  }, []);
+
   // Initialize Wallet
   useEffect(() => {
     const key = ec.genKeyPair();
@@ -79,7 +87,7 @@ export function useBlockchain() {
       setPeers(peersRes.data);
       setError('');
     } catch (err) {
-      if (!silent) setError('Failed to connect to the blockchain node.');
+      if (!silent) setError(handleApiError(err, 'Failed to connect to the blockchain node.'));
     } finally {
       if (!silent) {
         const elapsedTime = Date.now() - startTime;
@@ -119,7 +127,7 @@ export function useBlockchain() {
       setTimeout(() => setSuccess(''), 5000);
       return true;
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to submit transaction.');
+      setError(handleApiError(err, 'Failed to submit transaction.'));
       setTimeout(() => setError(''), 5000);
       return false;
     }
@@ -133,7 +141,8 @@ export function useBlockchain() {
       fetchData();
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
-      setError('Mining failed.');
+      setError(handleApiError(err, 'Mining failed.'));
+      setTimeout(() => setError(''), 5000);
     } finally {
       setIsMining(false);
     }
@@ -146,7 +155,8 @@ export function useBlockchain() {
       fetchData();
       setTimeout(() => setSuccess(''), 5000);
     } catch (err) {
-      setError('Failed to add peer.');
+      setError(handleApiError(err, 'Failed to add peer.'));
+      setTimeout(() => setError(''), 5000);
     }
   };
 
@@ -158,7 +168,7 @@ export function useBlockchain() {
       setSuccess(response.data.message);
       await fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to reset blockchain.');
+      setError(handleApiError(err, 'Failed to reset blockchain.'));
     } finally {
       setIsLoading(false);
       setTimeout(() => {

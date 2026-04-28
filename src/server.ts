@@ -4,6 +4,7 @@ import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
 import { P2PServer } from './P2PServer';
 import { Logger } from './Logger';
+import rateLimit from 'express-rate-limit';
 
 import { getLandingPage } from './LandingPage';
 
@@ -18,9 +19,48 @@ const p2pHost = process.env.P2P_HOST || 'localhost';
 app.use(cors());
 app.use(express.json());
 
-/**
- * Root endpoint - provides basic node information
- */
+// --- Rate Limiting ---
+
+// Standard limiter for most endpoints
+const globalLimiter = rateLimit({
+  windowMs: 5 * 1000, // 10 seconds
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please slow down.' }
+});
+
+// Strict limiter for mining (expensive operation)
+const miningLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Mining is rate-limited. Please wait before trying again.' }
+});
+
+// Strict limiter for transactions
+const transactionLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Transaction submission is rate-limited.' }
+});
+
+// Very strict limiter for reset
+const resetLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 2, // Limit each IP to 2 resets per 10 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Reset is heavily rate-limited.' }
+});
+
+// Apply global limiter to all routes
+app.use(globalLimiter);
+
+// --- Routes ---
 app.get('/', (req, res) => {
   res.send(getLandingPage());
 });
@@ -74,7 +114,7 @@ app.get('/pending', (req, res) => {
  * NOTE: This is intentionally unauthenticated and broadcasts to all peers to facilitate 
  * rapid testing in development.
  */
-app.post('/reset', (req, res) => {
+app.post('/reset', resetLimiter, (req, res) => {
   if (process.env.ALLOW_REMOTE_RESET === 'true') {
     myCoin.reset();
     p2pServer.broadcastReset();
@@ -104,7 +144,7 @@ app.post('/addPeer', (req, res) => {
  * Accepts a new signed transaction and adds it to the pending pool
  * Expects JSON body: { fromAddress, toAddress, amount, signature }
  */
-app.post('/transaction', (req, res) => {
+app.post('/transaction', transactionLimiter, (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ error: 'Missing request body' });
@@ -132,7 +172,7 @@ app.post('/transaction', (req, res) => {
  * Triggers the mining process to process all pending transactions
  * Expects JSON body: { rewardAddress }
  */
-app.post('/mine', (req, res) => {
+app.post('/mine', miningLimiter, (req, res) => {
   const rewardAddress = req.body?.rewardAddress;
 
   if (!rewardAddress) {
