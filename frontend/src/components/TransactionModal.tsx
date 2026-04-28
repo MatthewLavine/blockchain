@@ -1,14 +1,17 @@
-import React from 'react';
-import { X, Send, ArrowRight, ShieldCheck, Fingerprint, Coins, Clock } from 'lucide-react';
+import { X, ArrowUpRight, ArrowDownLeft, Cpu, ArrowRight, ShieldCheck, Fingerprint, Coins, Clock } from 'lucide-react';
 import { Transaction } from '../hooks/useBlockchain';
 
 interface TransactionModalProps {
   transaction: Transaction | null;
+  walletAddress: string;
   onClose: () => void;
 }
 
-export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, onClose }) => {
+export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction, walletAddress, onClose }) => {
   if (!transaction) return null;
+
+  const isSent = transaction.fromAddress === walletAddress;
+  const isMiningReward = transaction.fromAddress === null;
 
   return (
     <div style={{
@@ -38,8 +41,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction,
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
-              <Send size={24} />
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '40px',
+              height: '40px',
+              background: isMiningReward ? 'rgba(16, 185, 129, 0.1)' : (isSent ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'),
+              borderRadius: '10px', 
+              color: isMiningReward ? 'var(--accent-success)' : (isSent ? '#f87171' : 'var(--accent-success)')
+            }}>
+              {isMiningReward ? <Cpu size={24} /> : (isSent ? <ArrowUpRight size={24} /> : <ArrowDownLeft size={24} />)}
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>Transaction Details</h2>

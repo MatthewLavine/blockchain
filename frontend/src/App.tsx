@@ -119,13 +119,21 @@ function App() {
 
         {/* Column 3: Network Feeds */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
-          <Mempool transactions={pendingTransactions} onTransactionClick={setSelectedTransaction} />
+          <Mempool 
+            transactions={pendingTransactions} 
+            walletAddress={walletAddress}
+            onTransactionClick={setSelectedTransaction} 
+          />
           <ActivityList blocks={blocks} walletAddress={walletAddress} onTransactionClick={setSelectedTransaction} />
         </section>
       </div>
 
       <BlockModal block={selectedBlock} onClose={() => setSelectedBlock(null)} />
-      <TransactionModal transaction={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
+      <TransactionModal 
+        transaction={selectedTransaction} 
+        walletAddress={walletAddress}
+        onClose={() => setSelectedTransaction(null)} 
+      />
       <NetworkMap 
         isOpen={isNetworkModalOpen} 
         onClose={() => setIsNetworkModalOpen(false)} 

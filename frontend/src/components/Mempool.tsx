@@ -1,14 +1,15 @@
 import React from 'react';
-import { Layers, Send, ArrowRight } from 'lucide-react';
+import { Layers, ArrowUpRight, ArrowDownLeft, ArrowRight } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Transaction } from '../hooks/useBlockchain';
 
 interface MempoolProps {
   transactions: Transaction[];
+  walletAddress: string;
   onTransactionClick: (tx: Transaction) => void;
 }
 
-export const Mempool: React.FC<MempoolProps> = ({ transactions, onTransactionClick }) => {
+export const Mempool: React.FC<MempoolProps> = ({ transactions, walletAddress, onTransactionClick }) => {
   const parentRef = React.useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
@@ -83,10 +84,10 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions, onTransactionCli
                       height: '32px',
                       borderRadius: '8px', 
                       flexShrink: 0,
-                      background: 'rgba(99, 102, 241, 0.1)',
-                      color: 'var(--accent-primary)'
+                      background: tx.fromAddress === walletAddress ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      color: tx.fromAddress === walletAddress ? '#f87171' : 'var(--accent-success)'
                     }}>
-                      <Send size={16} />
+                      {tx.fromAddress === walletAddress ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: '2px' }}>
