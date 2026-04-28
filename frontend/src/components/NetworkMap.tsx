@@ -7,9 +7,10 @@ interface NetworkMapProps {
   onClose: () => void;
   peers: string[];
   onAddPeer: () => void;
+  isDarkMode: boolean;
 }
 
-export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, onAddPeer }) => {
+export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, onAddPeer, isDarkMode }) => {
   const fgRef = useRef<any>();
   const [dimensions, setDimensions] = useState({ width: 0, height: 250 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,19 +21,25 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, 
   }, [Array.from(new Set(peers)).sort().join(',')]);
 
   const graphData = useMemo(() => {
+    // Resolve CSS variables for the canvas
+    const rootStyle = getComputedStyle(document.documentElement);
+    const primaryColor = rootStyle.getPropertyValue('--accent-primary').trim() || '#6366f1';
+    const successColor = rootStyle.getPropertyValue('--accent-success').trim() || '#10b981';
+    const linkColor = isDarkMode ? 'rgba(99, 102, 241, 0.4)' : 'rgba(99, 102, 241, 0.25)';
+
     const nodes = [
-      { id: 'Local Node', name: 'This Node', group: 1, val: 8, color: 'var(--accent-primary)' },
-      ...uniquePeers.map(peer => ({ id: peer, name: peer.replace('ws://', ''), group: 2, val: 4, color: 'var(--accent-success)' }))
+      { id: 'Local Node', name: 'This Node', group: 1, val: 8, color: primaryColor },
+      ...uniquePeers.map(peer => ({ id: peer, name: peer.replace('ws://', ''), group: 2, val: 4, color: successColor }))
     ];
 
     const links = uniquePeers.map(peer => ({
       source: 'Local Node',
       target: peer,
-      color: 'var(--glass-border)'
+      color: linkColor
     }));
 
     return { nodes, links };
-  }, [uniquePeers]);
+  }, [uniquePeers, isDarkMode]);
 
   // Apply forces immediately before the browser paints
   // Dependency on dimensions.width ensures this runs after the container size is measured and ForceGraph2D mounts.

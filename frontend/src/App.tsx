@@ -138,6 +138,7 @@ function App() {
         isOpen={isNetworkModalOpen} 
         onClose={() => setIsNetworkModalOpen(false)} 
         peers={peers} 
+        isDarkMode={isDarkMode}
         onAddPeer={() => {
           const url = window.prompt('Enter Peer WebSocket URL (e.g., ws://localhost:6001):');
           if (url) addPeer(url);
