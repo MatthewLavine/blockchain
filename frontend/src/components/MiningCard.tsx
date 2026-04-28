@@ -18,6 +18,8 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
         flexDirection: 'column', 
         alignItems: 'center', 
         width: '100%',
+        flex: 1,
+        justifyContent: 'center',
         gap: '15px', 
         cursor: isMining ? 'default' : 'pointer',
         borderColor: isMining ? 'var(--accent-primary)' : 'var(--glass-border)',

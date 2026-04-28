@@ -98,7 +98,7 @@ function App() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr 350px', gap: '20px', alignItems: 'start' }}>
         {/* Column 1: My Wallet & Actions */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
           <WalletCard 
             address={walletAddress} 
             balance={balance} 
