@@ -1,3 +1,4 @@
+import React from 'react';
 import { Layers, Send, ArrowRight } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Transaction } from '../hooks/useBlockchain';
