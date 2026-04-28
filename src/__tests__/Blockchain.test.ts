@@ -60,6 +60,23 @@ describe('Blockchain', () => {
     expect(chain.pendingTransactions.length).toBeGreaterThan(0);
   });
 
+  test('createTransaction() rejects an invalid sender address', () => {
+    const tx = new Transaction('bad-address', bob.getPublic('hex'), 10);
+    // Since it's malformed, we don't even need to sign it to trigger the format check
+    expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
+  });
+
+  test('createTransaction() rejects an invalid recipient address', () => {
+    const tx = new Transaction(alice.getPublic('hex'), 'bad-address', 10);
+    tx.signTransaction(alice);
+    expect(() => chain.createTransaction(tx)).toThrow('Invalid recipient address format');
+  });
+
+  test('createTransaction() rejects a null sender address (system-only)', () => {
+    const tx = new Transaction(null, bob.getPublic('hex'), 10);
+    expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
+  });
+
   // ── replaceChain (Longest Chain Rule) ─────────────────────────────────────
 
   test('replaceChain() rejects a chain that is not longer', () => {

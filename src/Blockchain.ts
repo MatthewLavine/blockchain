@@ -257,8 +257,11 @@ export class Blockchain {
    */
   public createTransaction(transaction: Transaction): void {
     // TODO: Implement transaction fees to prevent mempool spam DoS attacks
-    if (!transaction.fromAddress || !transaction.toAddress) {
-      throw new Error('Transaction must include from and to address');
+    if (transaction.fromAddress === null || !Transaction.isValidAddress(transaction.fromAddress)) {
+      throw new Error('Invalid sender address format');
+    }
+    if (!Transaction.isValidAddress(transaction.toAddress)) {
+      throw new Error('Invalid recipient address format');
     }
 
     if (!Number.isInteger(transaction.amount) || transaction.amount <= 0) {

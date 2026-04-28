@@ -106,4 +106,25 @@ describe('Transaction', () => {
     const tx2 = new Transaction(sender.getPublic('hex'), other.getPublic('hex'), 50);
     expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
   });
+
+  // --- Address Validation ---
+  test('isValidAddress() returns true for valid uncompressed public keys', () => {
+    expect(Transaction.isValidAddress(sender.getPublic('hex'))).toBe(true);
+  });
+
+  test('isValidAddress() returns false for invalid strings', () => {
+    expect(Transaction.isValidAddress('too-short')).toBe(false);
+    expect(Transaction.isValidAddress('g'.repeat(130))).toBe(false); // Not hex
+    expect(Transaction.isValidAddress(null)).toBe(true); // Mining rewards are OK
+  });
+
+  test('isValid() throws for invalid sender address format', () => {
+    const tx = new Transaction('bad-address', recipient.getPublic('hex'), 50);
+    expect(() => tx.isValid()).toThrow('Invalid sender address format');
+  });
+
+  test('isValid() throws for invalid recipient address format', () => {
+    const tx = new Transaction(sender.getPublic('hex'), 'bad-address', 50);
+    expect(() => tx.isValid()).toThrow('Invalid recipient address format');
+  });
 });

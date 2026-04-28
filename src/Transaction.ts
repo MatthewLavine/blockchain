@@ -38,6 +38,25 @@ export class Transaction {
   }
 
   /**
+   * Validates if a given string is a valid public key (wallet address) for our network.
+   */
+  public static isValidAddress(address: string | null): boolean {
+    if (address === null) return true; // Mining rewards have no sender
+    if (typeof address !== 'string') return false;
+    
+    // Address must be a 130-char hex string (65 bytes uncompressed public key)
+    if (!/^[0-9a-fA-F]{130}$/.test(address)) return false;
+
+    try {
+      // Use elliptic to verify it's a valid point on our specific curve
+      ec.keyFromPublic(address, 'hex');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
    * Signs the transaction with the given private key.
    * @param signingKey The KeyPair object from elliptic.
    */
@@ -62,20 +81,28 @@ export class Transaction {
    * Verifies if the signature is valid and matches the transaction data.
    */
   public isValid(): boolean {
-    // 1. Mining rewards are valid by default (they have no 'from' address to check)
+    // 1. Validate address formats
+    if (!Transaction.isValidAddress(this.fromAddress)) {
+      throw new Error('Invalid sender address format');
+    }
+    if (!Transaction.isValidAddress(this.toAddress) || this.toAddress === null) {
+      throw new Error('Invalid recipient address format');
+    }
+
+    // 2. Mining rewards are valid by default (they have no 'from' address to check)
     if (this.fromAddress === null) return true;
 
-    // 2. Prevent sending negative, zero, or non-integer amounts!
+    // 3. Prevent sending negative, zero, or non-integer amounts!
     if (!Number.isInteger(this.amount) || this.amount <= 0) {
       throw new Error('Transaction amount must be a positive integer (atomic units)');
     }
 
-    // 3. If it has no signature, it's definitely invalid
+    // 4. If it has no signature, it's definitely invalid
     if (!this.signature || this.signature.length === 0) {
       throw new Error('No signature in this transaction');
     }
 
-    // 3. Verify the signature!
+    // 5. Verify the signature!
     // We recreate the public key object from the 'fromAddress' hex string
     const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
     
