@@ -38,15 +38,20 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
           flex: 1,
           gap: '8px', 
           cursor: isMining ? 'default' : 'pointer',
-          background: isMining ? 'rgba(16, 185, 129, 0.2)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          background: isMining 
+            ? 'linear-gradient(135deg, #059669 0%, #065f46 100%)' 
+            : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           borderRadius: '16px',
           padding: '24px',
           color: 'white',
-          boxShadow: isMining ? 'none' : '0 4px 15px -3px rgba(16, 185, 129, 0.4)',
-          animation: isMining ? 'pulse 2s infinite' : 'none',
+          boxShadow: isMining 
+            ? '0 0 20px rgba(16, 185, 129, 0.4)' 
+            : '0 4px 15px -3px rgba(16, 185, 129, 0.4)',
+          animation: isMining ? 'pulse 1.5s infinite' : 'none',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           outline: 'none',
-          border: 'none'
+          border: 'none',
+          transform: isMining ? 'scale(0.98)' : 'none'
         }}
         onMouseEnter={(e) => { if (!isMining) {
           e.currentTarget.style.transform = 'translateY(-3px)';
@@ -59,13 +64,20 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
           e.currentTarget.style.filter = 'brightness(1)';
         }}}
       >
-        <div style={{ textAlign: 'center' }}>
-          <h3 style={{ marginBottom: '6px', fontSize: '1.25rem', color: 'white', fontWeight: 700 }}>
-            {isMining ? 'Mining Block...' : 'Mine Next Block'}
-          </h3>
-          <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.85rem' }}>
-            Earn <span style={{ fontWeight: 700, color: 'white' }}>{reward} AGC</span> Reward
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+          {isMining && (
+            <div className="animate-spin" style={{ display: 'flex', flexShrink: 0 }}>
+              <Cpu size={24} />
+            </div>
+          )}
+          <div style={{ textAlign: isMining ? 'left' : 'center' }}>
+            <h3 style={{ marginBottom: '2px', fontSize: '1.1rem', color: 'white', fontWeight: 700, lineHeight: 1.2 }}>
+              {isMining ? 'Mining Block...' : 'Mine Next Block'}
+            </h3>
+            <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.8rem' }}>
+              {isMining ? 'Processing...' : `Earn ${reward} AGC Reward`}
+            </p>
+          </div>
         </div>
       </button>
     </div>
