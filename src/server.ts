@@ -5,6 +5,8 @@ import { Transaction } from './Transaction';
 import { P2PServer } from './P2PServer';
 import { Logger } from './Logger';
 
+import { getLandingPage } from './LandingPage';
+
 const app = express();
 app.set('trust proxy', true);
 const port = process.env.PORT || 7000;
@@ -15,6 +17,13 @@ const p2pHost = process.env.P2P_HOST || 'localhost';
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+/**
+ * Root endpoint - provides basic node information
+ */
+app.get('/', (req, res) => {
+  res.send(getLandingPage());
+});
 
 // Initialize our blockchain
 let myCoin = new Blockchain();
