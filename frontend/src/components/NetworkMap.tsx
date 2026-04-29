@@ -11,7 +11,7 @@ interface NetworkMapProps {
 }
 
 export const NetworkMap: React.FC<NetworkMapProps> = ({ isOpen, onClose, peers, onAddPeer, isDarkMode }) => {
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 250 });
   const containerRef = useRef<HTMLDivElement>(null);
 
