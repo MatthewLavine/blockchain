@@ -11,6 +11,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:80/" ]
       interval: 30s
@@ -39,6 +40,7 @@ services:
       - ./data/node1:/app/data
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -71,6 +73,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -103,6 +106,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -135,6 +139,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -167,6 +172,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -199,6 +205,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -231,6 +238,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -263,6 +271,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -295,6 +304,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
@@ -327,6 +337,7 @@ services:
         condition: service_healthy
     networks:
       - blockchain-net
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:7000/health" ]
       interval: 30s
