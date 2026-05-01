@@ -82,14 +82,13 @@ export class Blockchain {
       // Validate the loaded chain
       if (!this.isChainValid()) {
         Logger.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
-        this.chain = [this.createGenesisBlock()];
-        this.mempool.clear();
-        this.saveToDisk(); // Overwrite the corrupt file with a fresh start
+        this.reset();
       } else {
         Logger.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
       }
     } catch (err) {
       Logger.error('Failed to load blockchain from disk:', err);
+      this.reset();
     }
   }
 
