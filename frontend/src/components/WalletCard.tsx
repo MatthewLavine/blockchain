@@ -4,6 +4,7 @@ import { Wallet, Shield, ShieldAlert, Copy, Check, Save, Clock, RefreshCw } from
 interface WalletCardProps {
   address: string;
   balance: number;
+  effectiveBalance: number;
   walletType?: 'saved' | 'temporary';
   hasSavedWallet?: boolean;
   generateSavedWallet?: () => void;
@@ -14,6 +15,7 @@ interface WalletCardProps {
 export const WalletCard: React.FC<WalletCardProps> = ({ 
   address, 
   balance,
+  effectiveBalance,
   walletType = 'saved',
   hasSavedWallet = false,
   generateSavedWallet,
@@ -21,6 +23,7 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   loadSavedWallet
 }) => {
   const [copied, setCopied] = useState(false);
+  const hasPendingSpends = Math.abs(balance - effectiveBalance) > 0.0000001;
 
   const handleCopy = () => {
     if (!address) return;
@@ -92,11 +95,18 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         </div>
       </div>
 
-      <div>
-        <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Balance</label>
-        <div style={{ fontSize: '1.25rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 8 })} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>AGC</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+          {hasPendingSpends ? 'Available Balance' : 'Current Balance'}
+        </label>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          {Number(effectiveBalance).toLocaleString(undefined, { maximumFractionDigits: 8 })} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>AGC</span>
         </div>
+        {hasPendingSpends && (
+          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Total Mined: {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>

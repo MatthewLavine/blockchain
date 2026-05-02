@@ -21,6 +21,7 @@ function App() {
   const {
     walletAddress,
     balance,
+    effectiveBalance,
     blocks,
     pendingTransactions,
     isLoading,
@@ -105,6 +106,7 @@ function App() {
           <WalletCard 
             address={walletAddress} 
             balance={balance} 
+            effectiveBalance={effectiveBalance} 
             walletType={walletType}
             hasSavedWallet={hasSavedWallet}
             generateSavedWallet={generateSavedWallet}

@@ -110,7 +110,7 @@ export const BlockModal: React.FC<BlockModalProps> = ({ block, onClose }) => {
               <div key={i} className="glass-card" style={{ padding: '15px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1rem' }}>
-                    {tx.amount} AGC
+                    {Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {tx.fromAddress && (

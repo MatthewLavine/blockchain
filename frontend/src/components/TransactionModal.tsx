@@ -84,7 +84,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction,
             <Coins size={32} />
           </div>
           <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {transaction.amount} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>AGC</span>
+            {Number(transaction.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>AGC</span>
           </div>
         </div>
 

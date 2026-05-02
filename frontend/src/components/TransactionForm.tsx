@@ -56,6 +56,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
             placeholder="Amount" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            step="any"
             style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
           />
           <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>AGC</span>
@@ -68,7 +69,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ sendTransactio
               value={fee}
               onChange={(e) => setFee(e.target.value)}
               min={minFee}
-              step="0.001"
+              step="any"
               style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', outline: 'none', fontSize: '0.875rem' }}
             />
             <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>AGC</span>

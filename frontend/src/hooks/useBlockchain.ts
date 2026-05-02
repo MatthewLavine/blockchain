@@ -230,9 +230,14 @@ export function useBlockchain() {
     }
   };
 
+  const effectiveBalance = balance - pendingTransactions
+    .filter(tx => tx.fromAddress === walletAddress)
+    .reduce((sum, tx) => sum + tx.amount + tx.fee, 0);
+
   return {
     walletAddress,
     balance,
+    effectiveBalance,
     blocks,
     pendingTransactions,
     peers,

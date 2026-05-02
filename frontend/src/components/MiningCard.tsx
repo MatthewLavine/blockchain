@@ -78,7 +78,7 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
             <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.8rem' }}>
               {isMining
                 ? 'Processing...'
-                : `Earn ${reward} AGC${pendingFees > 0 ? ` + ${Number(pendingFees).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC Fees` : ' Reward'}`
+                : `Earn ${Number(reward).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC${pendingFees > 0 ? ` + ${Number(pendingFees).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC Fees` : ' Reward'}`
               }
             </p>
           </div>
