@@ -437,4 +437,23 @@ export class Blockchain {
       await this.db.close();
     }
   }
+
+  /**
+   * Returns a full dump of the underlying LevelDB for debugging purposes.
+   */
+  public async getDatabaseDump(): Promise<Record<string, any>> {
+    if (!this.db) {
+      return { error: 'Database not initialized' };
+    }
+
+    const dump: Record<string, any> = {};
+    try {
+      for await (const [key, value] of this.db.iterator()) {
+        dump[key] = value;
+      }
+      return dump;
+    } catch (err: any) {
+      return { error: 'Failed to read database', message: err.message };
+    }
+  }
 }

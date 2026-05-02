@@ -58,6 +58,15 @@ const resetLimiter = rateLimit({
   message: { error: 'Reset is heavily rate-limited.' }
 });
 
+// Very strict limiter for debug dump
+const debugLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Debug dump is rate-limited. Please wait 15 minutes.' }
+});
+
 // Apply global limiter to all routes
 app.use(globalLimiter);
 
@@ -75,13 +84,13 @@ let p2pServer: P2PServer;
  */
 async function bootstrap() {
   Logger.log('Bootstrapping node...');
-  
+
   // 1. Initialize storage (Wait for LevelDB to load)
   await myCoin.setStoragePath(port);
-  
+
   // 2. Initialize P2P server
   p2pServer = new P2PServer(myCoin);
-  
+
   // 3. Start HTTP server
   const server = app.listen(port, () => {
     Logger.log(`Blockchain Node listening at http://localhost:${port}`);
@@ -179,6 +188,25 @@ app.get('/peers', (req, res) => {
   res.json(p2pServer.getPeers());
 });
 
+/**
+ * Returns a full dump of the LevelDB (Debug only)
+ */
+app.get('/debug/db', debugLimiter, async (req, res) => {
+  if (process.env.ALLOW_DEBUG_DUMP === 'true') {
+    try {
+      const dump = await myCoin.getDatabaseDump();
+      res.json(dump);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    res.status(403).json({
+      error: 'Access denied',
+      message: 'Debug dump is disabled. Enable it with ALLOW_DEBUG_DUMP=true'
+    });
+  }
+});
+
 app.post('/addPeer', (req, res) => {
   const peerUrl = req.body?.peer;
   if (!peerUrl) {
@@ -192,9 +220,9 @@ app.post('/addPeer', (req, res) => {
       throw new Error('Peer URL must use ws:// or wss:// protocol');
     }
   } catch (err: any) {
-    return res.status(400).json({ 
-      error: 'Invalid peer URL', 
-      message: err.message 
+    return res.status(400).json({
+      error: 'Invalid peer URL',
+      message: err.message
     });
   }
 
