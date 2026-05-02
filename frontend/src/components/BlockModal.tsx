@@ -39,7 +39,17 @@ export const BlockModal: React.FC<BlockModalProps> = ({ block, onClose }) => {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '10px', color: 'var(--accent-primary)' }}>
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '44px',
+              height: '44px',
+              background: 'rgba(99, 102, 241, 0.1)', 
+              borderRadius: '10px', 
+              color: 'var(--accent-primary)',
+              flexShrink: 0
+            }}>
               <ShieldCheck size={24} />
             </div>
             <div>
