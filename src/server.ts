@@ -67,12 +67,44 @@ app.get('/', (req, res) => {
 });
 
 // Initialize our blockchain
-let myCoin = new Blockchain();
-const startBlockchain = async () => {
-  await myCoin.setStoragePath(port); // Enable disk persistence
-};
-startBlockchain();
-const p2pServer = new P2PServer(myCoin);
+const myCoin = new Blockchain();
+let p2pServer: P2PServer;
+
+/**
+ * Main application entry point
+ */
+async function bootstrap() {
+  Logger.log('Bootstrapping node...');
+  
+  // 1. Initialize storage (Wait for LevelDB to load)
+  await myCoin.setStoragePath(port);
+  
+  // 2. Initialize P2P server
+  p2pServer = new P2PServer(myCoin);
+  
+  // 3. Start HTTP server
+  const server = app.listen(port, () => {
+    Logger.log(`Blockchain Node listening at http://localhost:${port}`);
+    p2pServer.listen(Number(p2pPort), p2pHost);
+
+    // Auto-connect to seed node if provided
+    const seedNode = process.env.SEED_NODE;
+    if (seedNode) {
+      Logger.log(`Connecting to seed node: ${seedNode}`);
+      p2pServer.connectToSeed(seedNode);
+    }
+  });
+
+  // 4. Bind graceful shutdown handlers
+  const shutdownHandler = (signal: string) => shutdown(signal, server, p2pServer);
+  process.on('SIGTERM', () => shutdownHandler('SIGTERM'));
+  process.on('SIGINT', () => shutdownHandler('SIGINT'));
+}
+
+bootstrap().catch(err => {
+  Logger.error(`Failed to bootstrap node: ${err.message}`);
+  process.exit(1);
+});
 
 /**
  * Returns the entire blockchain
@@ -241,22 +273,12 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const server = app.listen(port, () => {
-  Logger.log(`Blockchain Node listening at http://localhost:${port}`);
-  p2pServer.listen(Number(p2pPort), p2pHost);
 
-  // Auto-connect to seed node if provided
-  const seedNode = process.env.SEED_NODE;
-  if (seedNode) {
-    Logger.log(`Connecting to seed node: ${seedNode}`);
-    p2pServer.connectToSeed(seedNode);
-  }
-});
 
 /**
  * Handle graceful shutdown
  */
-const shutdown = (signal: string) => {
+const shutdown = (signal: string, server: any, p2pServer: P2PServer) => {
   Logger.log(`Received ${signal}. Starting graceful shutdown...`);
 
   server.close(async () => {
@@ -275,6 +297,3 @@ const shutdown = (signal: string) => {
     process.exit(1);
   }, 5000);
 };
-
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));

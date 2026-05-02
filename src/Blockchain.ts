@@ -19,6 +19,7 @@ export class Blockchain {
   private ledger: Map<string, number> = new Map();
   private accountNonces: Map<string, number> = new Map();
   private MAX_MEMPOOL_SIZE = 5000;
+  private saveQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
@@ -45,24 +46,31 @@ export class Blockchain {
 
   private async saveToDisk(): Promise<void> {
     if (!this.db) return;
-    try {
-      const batch = this.db.batch();
-      
-      // Save metadata
-      batch.put('meta:latestIndex', (this.chain.length - 1).toString());
-      batch.put('meta:miningReward', this.miningReward.toString());
-      
-      // Save mempool
-      batch.put('mempool', this.pendingTransactions);
-      
-      // Save latest block
-      const latestBlock = this.getLatestBlock();
-      batch.put(`block:${latestBlock.index}`, latestBlock);
 
-      await batch.write();
-    } catch (err) {
-      Logger.error('Failed to save blockchain to LevelDB:', err);
-    }
+    // We use a promise-based queue to ensure that multiple saveToDisk calls 
+    // are executed sequentially, preventing race conditions on the 'meta:latestIndex'.
+    this.saveQueue = this.saveQueue.then(async () => {
+      try {
+        const batch = this.db!.batch();
+
+        // Save metadata
+        batch.put('meta:latestIndex', (this.chain.length - 1).toString());
+        batch.put('meta:miningReward', this.miningReward.toString());
+
+        // Save mempool
+        batch.put('mempool', this.pendingTransactions);
+
+        // Save latest block
+        const latestBlock = this.getLatestBlock();
+        batch.put(`block:${latestBlock.index}`, latestBlock);
+
+        await batch.write();
+      } catch (err) {
+        Logger.error('Failed to save blockchain to LevelDB:', err);
+      }
+    });
+
+    return this.saveQueue;
   }
 
   private async loadFromDisk(): Promise<void> {
