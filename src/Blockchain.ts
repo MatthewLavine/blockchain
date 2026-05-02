@@ -4,7 +4,7 @@ import { Logger } from './Logger';
 import { Mempool } from './Mempool';
 import { ChainValidator } from './ChainValidator';
 import { NETWORK_CONSTANTS } from './Constants';
-import * as fs from 'fs';
+import { Level } from 'level';
 import * as path from 'path';
 
 export class Blockchain {
@@ -12,11 +12,13 @@ export class Blockchain {
   public difficulty: number;
   private mempool: Mempool;
   public miningReward: number;
-  private storagePath: string | null = null;
+  private db: Level<string, any> | null = null;
   private knownSignatures: Set<string> = new Set();
   private ledger: Map<string, number> = new Map();
   private accountNonces: Map<string, number> = new Map();
   private MAX_MEMPOOL_SIZE = 5000;
+  private saveQueue: Promise<void> = Promise.resolve();
+  private lastSavedIndex: number = -1; // Tracks the highest block index persisted to disk
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
@@ -34,38 +36,92 @@ export class Blockchain {
     return this.mempool.getTransactions();
   }
 
-  public setStoragePath(id: string | number): void {
-    this.storagePath = path.join(__dirname, '..', 'data', `blockchain_${id}.json`);
-    this.loadFromDisk();
+  public async setStoragePath(id: string | number): Promise<void> {
+    const dbPath = path.join(__dirname, '..', 'data', `blockchain_db_${id}`);
+    this.db = new Level(dbPath, { valueEncoding: 'json' });
+    await this.loadFromDisk();
   }
 
-  private saveToDisk(): void {
-    if (!this.storagePath) return;
-    try {
-      const data = JSON.stringify({
-        chain: this.chain,
-        pendingTransactions: this.pendingTransactions,
-        miningReward: this.miningReward
-      }, null, 2);
-      fs.writeFileSync(this.storagePath, data);
-    } catch (err) {
-      Logger.error('Failed to save blockchain to disk:', err);
-    }
+  private async saveToDisk(): Promise<void> {
+    if (!this.db) return;
+
+    // We use a promise-based queue to ensure that multiple saveToDisk calls 
+    // are executed sequentially, preventing race conditions on the 'meta:latestIndex'.
+    this.saveQueue = this.saveQueue.then(async () => {
+      try {
+        const batch = this.db!.batch();
+
+        // 1. Metadata and Mempool
+        batch.put('meta:latestIndex', (this.chain.length - 1).toString());
+        batch.put('meta:miningReward', this.miningReward.toString());
+        batch.put('mempool', this.pendingTransactions);
+
+        // 2. Delta Persistence: Only save blocks that haven't been persisted yet.
+        // This handles both single-block appends and large P2P syncs efficiently.
+        for (let i = this.lastSavedIndex + 1; i < this.chain.length; i++) {
+          batch.put(`block:${i}`, this.chain[i]);
+        }
+
+        await batch.write();
+
+        // Only update the lastSavedIndex after a successful write
+        this.lastSavedIndex = this.chain.length - 1;
+      } catch (err) {
+        Logger.error('Failed to save blockchain to LevelDB:', err);
+      }
+    });
+
+    return this.saveQueue;
   }
 
-  private loadFromDisk(): void {
-    if (!this.storagePath || !fs.existsSync(this.storagePath)) return;
+  private async loadFromDisk(): Promise<void> {
+    if (!this.db) return;
     try {
-      const data = JSON.parse(fs.readFileSync(this.storagePath, 'utf8'));
+      let latestIndex = 0;
+      try {
+        const latestIndexStr = await this.db.get('meta:latestIndex');
+        if (!latestIndexStr || isNaN(parseInt(latestIndexStr))) {
+          throw { notFound: true }; // Force fresh start if metadata is corrupted
+        }
+        latestIndex = parseInt(latestIndexStr);
+        this.lastSavedIndex = latestIndex;
+      } catch (err: any) {
+        if (err.notFound) {
+          Logger.log('No existing blockchain found or metadata corrupted. Starting fresh.');
+          this.chain = [this.createGenesisBlock()]; // Ensure genesis exists
+          await this.saveToDisk();
+          return;
+        }
+        throw err;
+      }
 
-      // Hydrate chain and transactions using factory methods
-      this.chain = data.chain.map((block: any) => Block.fromObject(block));
+      const chain: Block[] = [];
+      for (let i = 0; i <= latestIndex; i++) {
+        const blockData = await this.db.get(`block:${i}`);
+        chain.push(Block.fromObject(blockData));
+      }
+      this.chain = chain;
 
-      this.mempool.setTransactions(data.pendingTransactions.map((tx: any) =>
-        Transaction.fromObject(tx)
-      ));
+      try {
+        const mempoolData = await this.db.get('mempool');
+        if (mempoolData && Array.isArray(mempoolData)) {
+          this.mempool.setTransactions(mempoolData.map((tx: any) =>
+            Transaction.fromObject(tx)
+          ));
+        }
+      } catch (err: any) {
+        if (!err.notFound) throw err;
+        Logger.log('No persisted mempool found, starting empty.');
+      }
 
-      this.miningReward = data.miningReward;
+      try {
+        const rewardStr = await this.db.get('meta:miningReward');
+        if (rewardStr) {
+          this.miningReward = parseFloat(rewardStr);
+        }
+      } catch (err: any) {
+        if (!err.notFound) throw err;
+      }
 
       // Rebuild stateful ledger and nonces from the trusted block history
       this.ledger = this.getLedger();
@@ -82,21 +138,17 @@ export class Blockchain {
       // Validate the loaded chain
       if (!this.isChainValid()) {
         Logger.error('CRITICAL: Loaded blockchain is invalid! Resetting to Genesis block.');
-        this.reset();
+        await this.reset();
       } else {
-        Logger.log(`Successfully loaded and verified blockchain from disk (${this.chain.length} blocks)`);
+        Logger.log(`Successfully loaded and verified blockchain from LevelDB (${this.chain.length} blocks)`);
       }
-    } catch (err) {
-      Logger.error('Failed to load blockchain from disk:', err);
-      this.reset();
+    } catch (err: any) {
+      Logger.error('Failed to load blockchain from LevelDB:', err.message);
+      await this.reset();
     }
   }
 
-  /**
-   * Resets the entire blockchain to its initial state (genesis only).
-   * WARNING: This wipes all transaction history and balances.
-   */
-  public reset(): void {
+  public async reset(): Promise<void> {
     this.chain = [this.createGenesisBlock()];
     this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
     this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
@@ -104,7 +156,8 @@ export class Blockchain {
     this.ledger.clear();
     this.knownSignatures.clear();
     this.accountNonces.clear();
-    this.saveToDisk();
+    this.lastSavedIndex = -1; // Reset persistence tracker
+    await this.saveToDisk();
     Logger.log('Blockchain reset to genesis state.');
   }
 
@@ -132,7 +185,7 @@ export class Blockchain {
    * Takes all pending transactions, puts them in a Block, and mines it.
    * @param miningRewardAddress The wallet address to send the mining reward to.
    */
-  public minePendingTransactions(miningRewardAddress: string): void {
+  public async minePendingTransactions(miningRewardAddress: string): Promise<void> {
     // 1. Create the reward transaction for the miner (base reward + all pending fees)
     const nextBlockIndex = this.chain.length;
     const currentReward = NETWORK_CONSTANTS.calculateMiningReward(nextBlockIndex);
@@ -155,7 +208,7 @@ export class Blockchain {
     Logger.log(`Block #${block.index} Mined! Hash: ${block.hash.substring(0, 10)}... (Nonce: ${block.nonce})`);
 
     // 4. Add the mined block to our chain
-    this.addBlock(block);
+    await this.addBlock(block);
 
     // 5. Remove only the transactions that were mined into the block from the mempool
     this.mempool.removeTransactions(transactionsToMine);
@@ -168,7 +221,7 @@ export class Blockchain {
    * Directly adds a block to the chain and saves it to disk.
    * Useful for syncing blocks received from peers.
    */
-  public addBlock(newBlock: Record<string, any> | Block): void {
+  public async addBlock(newBlock: Record<string, any> | Block): Promise<void> {
     const hydratedBlock = newBlock instanceof Block ? newBlock : Block.fromObject(newBlock);
 
     // 1. Prepare validation context
@@ -211,7 +264,7 @@ export class Blockchain {
     // 5. Sync mempool: Remove any transactions that were just included in this block
     this.mempool.removeTransactions(hydratedBlock.transactions);
 
-    this.saveToDisk();
+    await this.saveToDisk();
   }
 
   /**
@@ -250,14 +303,14 @@ export class Blockchain {
    */
   public getNextNonce(address: string): number {
     let nonce = this.accountNonces.get(address) || 0;
-    
+
     // Add pending transactions from this address
     for (const tx of this.mempool.getTransactions()) {
       if (tx.fromAddress === address) {
         nonce++;
       }
     }
-    
+
     return nonce;
   }
 
@@ -265,7 +318,7 @@ export class Blockchain {
    * Adds a new transaction to the pool of pending transactions.
    * It enforces that the transaction must be signed, valid, and the sender has enough funds!
    */
-  public createTransaction(transaction: Transaction): void {
+  public async createTransaction(transaction: Transaction): Promise<void> {
     // Enforce minimum transaction fee
     if (transaction.fee < NETWORK_CONSTANTS.MIN_TRANSACTION_FEE) {
       throw new Error(
@@ -319,7 +372,7 @@ export class Blockchain {
     }
 
     this.mempool.addTransaction(transaction);
-    this.saveToDisk();
+    await this.saveToDisk();
   }
 
   /**
@@ -358,7 +411,7 @@ export class Blockchain {
    * Replaces the current chain with a new one, provided the new chain is longer and valid.
    * This is the core of the "Longest Chain Rule" in decentralization.
    */
-  public replaceChain(newChain: (Record<string, any> | Block)[]): boolean {
+  public async replaceChain(newChain: (Record<string, any> | Block)[]): Promise<boolean> {
     if (newChain.length <= this.chain.length) {
       Logger.log('Received chain is not longer than current chain. Ignoring.');
       return false;
@@ -389,15 +442,38 @@ export class Blockchain {
       }
     }
 
-    this.saveToDisk();
+    this.lastSavedIndex = -1; // Force a full chain rewrite to handle potential reorgs
+    await this.saveToDisk();
     return true;
   }
 
   /**
    * Gracefully shuts down the blockchain, ensuring latest state is persisted.
    */
-  public shutdown(): void {
+  public async shutdown(): Promise<void> {
     Logger.log('Shutting down blockchain... Saving latest state.');
-    this.saveToDisk();
+    await this.saveToDisk();
+    if (this.db) {
+      await this.db.close();
+    }
+  }
+
+  /**
+   * Returns a full dump of the underlying LevelDB for debugging purposes.
+   */
+  public async getDatabaseDump(): Promise<Record<string, any>> {
+    if (!this.db) {
+      return { error: 'Database not initialized' };
+    }
+
+    const dump: Record<string, any> = {};
+    try {
+      for await (const [key, value] of this.db.iterator()) {
+        dump[key] = value;
+      }
+      return dump;
+    } catch (err: any) {
+      return { error: 'Failed to read database', message: err.message };
+    }
   }
 }

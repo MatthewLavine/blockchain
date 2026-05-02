@@ -58,6 +58,15 @@ const resetLimiter = rateLimit({
   message: { error: 'Reset is heavily rate-limited.' }
 });
 
+// Very strict limiter for debug dump
+const debugLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Debug dump is rate-limited. Please wait 15 minutes.' }
+});
+
 // Apply global limiter to all routes
 app.use(globalLimiter);
 
@@ -67,9 +76,44 @@ app.get('/', (req, res) => {
 });
 
 // Initialize our blockchain
-let myCoin = new Blockchain();
-myCoin.setStoragePath(port); // Enable disk persistence
-const p2pServer = new P2PServer(myCoin);
+const myCoin = new Blockchain();
+let p2pServer: P2PServer;
+
+/**
+ * Main application entry point
+ */
+async function bootstrap() {
+  Logger.log('Bootstrapping node...');
+
+  // 1. Initialize storage (Wait for LevelDB to load)
+  await myCoin.setStoragePath(port);
+
+  // 2. Initialize P2P server
+  p2pServer = new P2PServer(myCoin);
+
+  // 3. Start HTTP server
+  const server = app.listen(port, () => {
+    Logger.log(`Blockchain Node listening at http://localhost:${port}`);
+    p2pServer.listen(Number(p2pPort), p2pHost);
+
+    // Auto-connect to seed node if provided
+    const seedNode = process.env.SEED_NODE;
+    if (seedNode) {
+      Logger.log(`Connecting to seed node: ${seedNode}`);
+      p2pServer.connectToSeed(seedNode);
+    }
+  });
+
+  // 4. Bind graceful shutdown handlers
+  const shutdownHandler = (signal: string) => shutdown(signal, server, p2pServer);
+  process.on('SIGTERM', () => shutdownHandler('SIGTERM'));
+  process.on('SIGINT', () => shutdownHandler('SIGINT'));
+}
+
+bootstrap().catch(err => {
+  Logger.error(`Failed to bootstrap node: ${err.message}`);
+  process.exit(1);
+});
 
 /**
  * Returns the entire blockchain
@@ -127,9 +171,9 @@ app.get('/pending', (req, res) => {
  * NOTE: This is intentionally unauthenticated and broadcasts to all peers to facilitate 
  * rapid testing in development.
  */
-app.post('/reset', resetLimiter, (req, res) => {
+app.post('/reset', resetLimiter, async (req, res) => {
   if (process.env.ALLOW_REMOTE_RESET === 'true') {
-    myCoin.reset();
+    await myCoin.reset();
     p2pServer.broadcastReset();
     res.json({ message: 'Blockchain has been reset to genesis state.' });
   } else {
@@ -142,6 +186,25 @@ app.post('/reset', resetLimiter, (req, res) => {
 
 app.get('/peers', (req, res) => {
   res.json(p2pServer.getPeers());
+});
+
+/**
+ * Returns a full dump of the LevelDB (Debug only)
+ */
+app.get('/debug/db', debugLimiter, async (req, res) => {
+  if (process.env.ALLOW_DEBUG_DUMP === 'true') {
+    try {
+      const dump = await myCoin.getDatabaseDump();
+      res.json(dump);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    res.status(403).json({
+      error: 'Access denied',
+      message: 'Debug dump is disabled. Enable it with ALLOW_DEBUG_DUMP=true'
+    });
+  }
 });
 
 app.post('/addPeer', (req, res) => {
@@ -157,9 +220,9 @@ app.post('/addPeer', (req, res) => {
       throw new Error('Peer URL must use ws:// or wss:// protocol');
     }
   } catch (err: any) {
-    return res.status(400).json({ 
-      error: 'Invalid peer URL', 
-      message: err.message 
+    return res.status(400).json({
+      error: 'Invalid peer URL',
+      message: err.message
     });
   }
 
@@ -176,7 +239,7 @@ app.post('/addPeer', (req, res) => {
  * Accepts a new signed transaction and adds it to the pending pool
  * Expects JSON body: { fromAddress, toAddress, amount, signature }
  */
-app.post('/transaction', transactionLimiter, (req, res) => {
+app.post('/transaction', transactionLimiter, async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ error: 'Missing request body' });
@@ -191,7 +254,7 @@ app.post('/transaction', transactionLimiter, (req, res) => {
     const tx = Transaction.fromObject(req.body);
 
     // The createTransaction method internally checks tx.isValid()
-    myCoin.createTransaction(tx);
+    await myCoin.createTransaction(tx);
     p2pServer.broadcastTransaction(tx);
 
     res.json({ message: 'Transaction successfully added to pending pool!' });
@@ -204,7 +267,7 @@ app.post('/transaction', transactionLimiter, (req, res) => {
  * Triggers the mining process to process all pending transactions
  * Expects JSON body: { rewardAddress }
  */
-app.post('/mine', miningLimiter, (req, res) => {
+app.post('/mine', miningLimiter, async (req, res) => {
   const rewardAddress = req.body?.rewardAddress;
 
   if (!rewardAddress) {
@@ -212,7 +275,7 @@ app.post('/mine', miningLimiter, (req, res) => {
   }
 
   try {
-    myCoin.minePendingTransactions(rewardAddress);
+    await myCoin.minePendingTransactions(rewardAddress);
     p2pServer.broadcastLatest();
     res.json({
       message: 'Block successfully mined!',
@@ -238,29 +301,19 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const server = app.listen(port, () => {
-  Logger.log(`Blockchain Node listening at http://localhost:${port}`);
-  p2pServer.listen(Number(p2pPort), p2pHost);
 
-  // Auto-connect to seed node if provided
-  const seedNode = process.env.SEED_NODE;
-  if (seedNode) {
-    Logger.log(`Connecting to seed node: ${seedNode}`);
-    p2pServer.connectToSeed(seedNode);
-  }
-});
 
 /**
  * Handle graceful shutdown
  */
-const shutdown = (signal: string) => {
+const shutdown = (signal: string, server: any, p2pServer: P2PServer) => {
   Logger.log(`Received ${signal}. Starting graceful shutdown...`);
 
-  server.close(() => {
+  server.close(async () => {
     Logger.log('HTTP server closed.');
 
     p2pServer.close();
-    myCoin.shutdown();
+    await myCoin.shutdown();
 
     Logger.log('Shutdown complete. Goodbye!');
     process.exit(0);
@@ -272,6 +325,3 @@ const shutdown = (signal: string) => {
     process.exit(1);
   }, 5000);
 };
-
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));

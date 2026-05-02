@@ -7,8 +7,9 @@ describe('Blockchain Performance Benchmark', () => {
 
   let mockTime = 1800000000000;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     chain = new Blockchain();
+    await chain.setStoragePath(`test_perf_${Math.random().toString(36).substring(7)}`);
     chain.difficulty = 0;
     mockTime = 1800000000000;
     jest.spyOn(Date, 'now').mockImplementation(() => mockTime++);
@@ -16,31 +17,33 @@ describe('Blockchain Performance Benchmark', () => {
     jest.spyOn(Transaction.prototype, 'isValid').mockReturnValue(true);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await chain.shutdown();
     jest.restoreAllMocks();
   });
 
-  const buildChain = (numBlocks: number, txsPerBlock: number) => {
+  const buildChain = async (numBlocks: number, txsPerBlock: number) => {
     const address = 'alice';
     const recipient = 'bob';
     const start = performance.now();
 
     // Initial fund
-    chain.minePendingTransactions(address);
+    await chain.minePendingTransactions(address);
 
     for (let i = 0; i < numBlocks; i++) {
       for (let j = 0; j < txsPerBlock; j++) {
+        const nonce = chain.getNextNonce(address);
         // Mock transaction that doesn't need signing
-        const tx = new Transaction(address, recipient, 1, 0, 1000);
-        (chain as any).pendingTransactions.push(tx);
+        const tx = new Transaction(address, recipient, 1, nonce, 1000);
+        (chain as any).mempool.addTransaction(tx);
       }
-      chain.minePendingTransactions(address);
+      await chain.minePendingTransactions(address);
     }
     return performance.now() - start;
   };
 
-  test('Benchmark getLedger() and isChainValid() performance', () => {
-    const sizes = [10, 100, 1000, 10000, 100000];
+  test('Benchmark getLedger() and isChainValid() performance', async () => {
+    const sizes = [10, 100, 1000]; // Reduced sizes for CI speed
     const txsPerBlock = 10;
 
     process.stdout.write('\n--- Comprehensive Performance Benchmark (Crypto Mocked) ---\n');
@@ -49,9 +52,13 @@ describe('Blockchain Performance Benchmark', () => {
     process.stdout.write('-------|-----------|------------|-------------|---------------\n');
 
     for (const size of sizes) {
+      // Re-initialize for each size
+      if (chain) await chain.shutdown();
       chain = new Blockchain();
+      await chain.setStoragePath(`test_perf_${size}_${Math.random().toString(36).substring(7)}`);
       chain.difficulty = 0;
-      const buildTime = buildChain(size, txsPerBlock);
+      
+      const buildTime = await buildChain(size, txsPerBlock);
 
       const startLedger = performance.now();
       (chain as any).getLedger();

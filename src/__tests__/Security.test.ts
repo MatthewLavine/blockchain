@@ -11,19 +11,24 @@ const otherAddress = ec.genKeyPair().getPublic('hex');
 describe('Blockchain Security', () => {
     let antigravity: Blockchain;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         antigravity = new Blockchain();
+        await antigravity.setStoragePath(`test_security_${Math.random().toString(36).substring(7)}`);
         // Give some initial money via a manual block if needed, 
         // but mining rewards are easier.
-        antigravity.minePendingTransactions(myAddress); // Block 1: Miner reward to me
+        await antigravity.minePendingTransactions(myAddress); // Block 1: Miner reward to me
     });
 
-    test('should prevent replay attacks in addBlock', () => {
+    afterEach(async () => {
+        await antigravity.shutdown();
+    });
+
+    test('should prevent replay attacks in addBlock', async () => {
         const tx = new Transaction(myAddress, otherAddress, 10, 0, 1000);
         tx.signTransaction(myKey);
         
-        antigravity.createTransaction(tx);
-        antigravity.minePendingTransactions(myAddress); // Block 2 includes tx
+        await antigravity.createTransaction(tx);
+        await antigravity.minePendingTransactions(myAddress); // Block 2 includes tx
 
         const balanceAfterFirst = antigravity.getBalanceOfAddress(myAddress);
 
@@ -37,14 +42,14 @@ describe('Blockchain Security', () => {
         };
         
         // This should throw because the signature is already in knownSignatures
-        expect(() => {
-            antigravity.addBlock(replayedBlock);
-        }).toThrow(/Replay attack detected/);
+        await expect(async () => {
+            await antigravity.addBlock(replayedBlock);
+        }).rejects.toThrow(/Replay attack detected/);
         
         expect(antigravity.getBalanceOfAddress(myAddress)).toBe(balanceAfterFirst);
     });
 
-    test('should prevent intra-block replay attacks (duplicate tx in same block)', () => {
+    test('should prevent intra-block replay attacks (duplicate tx in same block)', async () => {
         const tx = new Transaction(myAddress, otherAddress, 10, 0, 1000);
         tx.signTransaction(myKey);
         
@@ -57,9 +62,9 @@ describe('Blockchain Security', () => {
         );
         maliciousBlock.mineBlock(antigravity.difficulty);
         
-        expect(() => {
-            antigravity.addBlock(maliciousBlock);
-        }).toThrow(/Replay attack detected/);
+        await expect(async () => {
+            await antigravity.addBlock(maliciousBlock);
+        }).rejects.toThrow(/Replay attack detected/);
         
         // Ensure balance was NOT deducted (block should be rejected entirely)
         expect(antigravity.getBalanceOfAddress(otherAddress)).toBe(0);
@@ -79,11 +84,11 @@ describe('Blockchain Security', () => {
         expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
     });
 
-    test('should sync mempool when a block is added externally', () => {
+    test('should sync mempool when a block is added externally', async () => {
         const tx = new Transaction(myAddress, otherAddress, 5, 0, 1000);
         tx.signTransaction(myKey);
         
-        antigravity.createTransaction(tx);
+        await antigravity.createTransaction(tx);
         expect(antigravity.pendingTransactions.length).toBe(1);
 
         // Simulate a peer mining this transaction first
@@ -97,7 +102,7 @@ describe('Blockchain Security', () => {
         );
         peerBlock.mineBlock(antigravity.difficulty);
 
-        antigravity.addBlock(peerBlock);
+        await antigravity.addBlock(peerBlock);
 
         // Transaction should be removed from mempool
         expect(antigravity.pendingTransactions.length).toBe(0);

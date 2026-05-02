@@ -7,7 +7,7 @@ const ec = new EC('secp256k1');
 
 // Helper: generate a funded wallet by mining a reward to it
 async function fundWallet(chain: Blockchain, address: string): Promise<void> {
-  chain.minePendingTransactions(address);
+  await chain.minePendingTransactions(address);
 }
 
 describe('Blockchain', () => {
@@ -15,10 +15,16 @@ describe('Blockchain', () => {
   let alice: EC.KeyPair;
   let bob: EC.KeyPair;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     chain = new Blockchain();
+    // Use a unique ID for each test to ensure LevelDB isolation
+    await chain.setStoragePath(`test_${Math.random().toString(36).substring(7)}`);
     alice = ec.genKeyPair();
     bob = ec.genKeyPair();
+  });
+
+  afterEach(async () => {
+    await chain.shutdown();
   });
 
   // ── Balance ──────────────────────────────────────────────────────────────
@@ -27,29 +33,29 @@ describe('Blockchain', () => {
     expect(chain.getBalanceOfAddress(alice.getPublic('hex'))).toBe(0);
   });
 
-  test('getBalanceOfAddress() reflects mining rewards', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('getBalanceOfAddress() reflects mining rewards', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     // The reward tx is now in the latest block
     expect(chain.getBalanceOfAddress(alice.getPublic('hex'))).toBeGreaterThan(0);
   });
 
   // ── createTransaction ─────────────────────────────────────────────────────
 
-  test('createTransaction() rejects an unsigned transaction', () => {
+  test('createTransaction() rejects an unsigned transaction', async () => {
     const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10, 0, 1000);
     // No signature — should throw
-    expect(() => chain.createTransaction(tx)).toThrow();
+    await expect(chain.createTransaction(tx)).rejects.toThrow();
   });
 
-  test('createTransaction() rejects a transaction with insufficient funds', () => {
+  test('createTransaction() rejects a transaction with insufficient funds', async () => {
     const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 9999 * 1000000, 0, 1000);
     tx.signTransaction(alice);
-    expect(() => chain.createTransaction(tx)).toThrow('Not enough balance');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('Not enough balance');
   });
 
-  test('createTransaction() accepts a valid funded transaction', () => {
+  test('createTransaction() accepts a valid funded transaction', async () => {
     // Fund alice
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    await chain.minePendingTransactions(alice.getPublic('hex'));
 
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
     expect(aliceBalance).toBeGreaterThan(0);
@@ -58,60 +64,64 @@ describe('Blockchain', () => {
     const fee = 1000;
     const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     tx.signTransaction(alice);
-    expect(() => chain.createTransaction(tx)).not.toThrow();
+    await expect(chain.createTransaction(tx)).resolves.not.toThrow();
     expect(chain.pendingTransactions.length).toBeGreaterThan(0);
   });
 
-  test('createTransaction() rejects a transaction with fee too low', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('createTransaction() rejects a transaction with fee too low', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 1000, 0, 0);
     tx.signTransaction(alice);
-    expect(() => chain.createTransaction(tx)).toThrow('fee too low');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('fee too low');
   });
 
-  test('createTransaction() rejects an invalid sender address', () => {
+  test('createTransaction() rejects an invalid sender address', async () => {
     const tx = new Transaction('bad-address', bob.getPublic('hex'), 10, 0, 1000);
     // Since it's malformed, we don't even need to sign it to trigger the format check
-    expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('Invalid sender address format');
   });
 
-  test('createTransaction() rejects an invalid recipient address', () => {
+  test('createTransaction() rejects an invalid recipient address', async () => {
     const tx = new Transaction(alice.getPublic('hex'), 'bad-address', 10, 0, 1000);
     tx.signTransaction(alice);
-    expect(() => chain.createTransaction(tx)).toThrow('Invalid recipient address format');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('Invalid recipient address format');
   });
 
-  test('createTransaction() rejects a null sender address (system-only)', () => {
+  test('createTransaction() rejects a null sender address (system-only)', async () => {
     const tx = new Transaction(null, bob.getPublic('hex'), 10, 0, 1000);
-    expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('Invalid sender address format');
   });
 
   // ── replaceChain (Longest Chain Rule) ─────────────────────────────────────
 
-  test('replaceChain() rejects a chain that is not longer', () => {
+  test('replaceChain() rejects a chain that is not longer', async () => {
     const shorterChain = chain.chain.slice();
-    const result = chain.replaceChain(shorterChain);
+    const result = await chain.replaceChain(shorterChain);
     expect(result).toBe(false);
   });
 
-  test('replaceChain() rejects an invalid longer chain', () => {
+  test('replaceChain() rejects an invalid longer chain', async () => {
     const other = new Blockchain();
-    other.minePendingTransactions(bob.getPublic('hex'));
+    await other.setStoragePath(`test_other_${Math.random().toString(36).substring(7)}`);
+    await other.minePendingTransactions(bob.getPublic('hex'));
     // Tamper a block
     (other.chain[1] as any).hash = 'tampered';
 
-    const result = chain.replaceChain(other.chain);
+    const result = await chain.replaceChain(other.chain);
     expect(result).toBe(false);
+    await other.shutdown();
   });
 
-  test('replaceChain() accepts a valid longer chain', () => {
+  test('replaceChain() accepts a valid longer chain', async () => {
     const other = new Blockchain();
-    other.minePendingTransactions(bob.getPublic('hex'));
-    other.minePendingTransactions(bob.getPublic('hex'));
+    await other.setStoragePath(`test_other_${Math.random().toString(36).substring(7)}`);
+    await other.minePendingTransactions(bob.getPublic('hex'));
+    await other.minePendingTransactions(bob.getPublic('hex'));
 
-    const result = chain.replaceChain(other.chain);
+    const result = await chain.replaceChain(other.chain);
     expect(result).toBe(true);
     expect(chain.chain.length).toBe(other.chain.length);
+    await other.shutdown();
   });
 
   // ── isChainValid ─────────────────────────────────────────────────────────
@@ -120,45 +130,45 @@ describe('Blockchain', () => {
     expect(chain.isChainValid()).toBe(true);
   });
 
-  test('isChainValid() returns false after tampering a block', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('isChainValid() returns false after tampering a block', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     (chain.chain[1] as any).hash = 'tampered';
     expect(chain.isChainValid()).toBe(false);
   });
 
   // ── Mining Flow ───────────────────────────────────────────────────────────
 
-  test('minePendingTransactions() adds a new block to the chain', () => {
+  test('minePendingTransactions() adds a new block to the chain', async () => {
     expect(chain.chain.length).toBe(1); // genesis only
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     expect(chain.chain.length).toBe(2);
   });
 
-  test('minePendingTransactions() clears the mempool', () => {
+  test('minePendingTransactions() clears the mempool', async () => {
     // Add a user transaction first
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
     const fee = 1000;
     const userTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     userTx.signTransaction(alice);
-    chain.createTransaction(userTx);
+    await chain.createTransaction(userTx);
 
     // Mine — should clear the mempool
-    chain.minePendingTransactions(bob.getPublic('hex'));
+    await chain.minePendingTransactions(bob.getPublic('hex'));
     expect(chain.pendingTransactions).toHaveLength(0);
   });
 
-  test('minePendingTransactions() only removes transactions that were included in the block', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('minePendingTransactions() only removes transactions that were included in the block', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const fee = 1000;
     const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000, 0, fee);
     tx1.signTransaction(alice);
-    chain.createTransaction(tx1);
+    await chain.createTransaction(tx1);
 
     const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20000, 1, fee);
     tx2.signTransaction(alice);
-    chain.createTransaction(tx2);
+    await chain.createTransaction(tx2);
 
     // If we were to mine now, both would be included. 
     // To test the "partial clear" logic, we can manually call removeTransactions 
@@ -169,23 +179,23 @@ describe('Blockchain', () => {
     expect(chain.pendingTransactions[0].signature).toBe(tx2.signature);
   });
 
-  test('addBlock() rejects blocks with invalid transactions', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('addBlock() rejects blocks with invalid transactions', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const badTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000000, 0, 1000); // too much money
     badTx.signTransaction(alice);
     
     const badBlock = new Block(chain.chain.length, Date.now(), [badTx], chain.getLatestBlock().hash);
     badBlock.mineBlock(chain.difficulty);
 
-    expect(() => chain.addBlock(badBlock)).toThrow('failed validation');
+    await expect(chain.addBlock(badBlock)).rejects.toThrow('failed validation');
   });
 
-  test('addBlock() should not mutate the ledger if validation fails halfway', () => {
+  test('addBlock() should not mutate the ledger if validation fails halfway', async () => {
     const address = alice.getPublic('hex');
     const recipient = bob.getPublic('hex');
     
     // 1. Give Alice some money
-    chain.minePendingTransactions(address);
+    await chain.minePendingTransactions(address);
     const initialBalance = chain.getBalanceOfAddress(address);
     
     // 2. Create a block with one valid tx and one invalid tx (insufficient funds)
@@ -200,7 +210,7 @@ describe('Blockchain', () => {
     
     // 3. Try to add the block
     try {
-      chain.addBlock(block);
+      await chain.addBlock(block);
     } catch (e) {
       // Expected
     }
@@ -209,8 +219,8 @@ describe('Blockchain', () => {
     expect(chain.getBalanceOfAddress(address)).toBe(initialBalance);
   });
 
-  test('getLatestBlock() returns the most recently added block', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('getLatestBlock() returns the most recently added block', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const latest = chain.getLatestBlock();
     expect(latest.index).toBe(chain.chain.length - 1);
     expect(latest).toBe(chain.chain[chain.chain.length - 1]);
@@ -223,27 +233,27 @@ describe('Blockchain', () => {
 
   // ── Double-Spend Prevention ───────────────────────────────────────────────
 
-  test('createTransaction() prevents double-spend using pending balance', () => {
+  test('createTransaction() prevents double-spend using pending balance', async () => {
     // Fund alice
-    chain.minePendingTransactions(alice.getPublic('hex'));
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
     const fee = 1000;
     // First tx spends balance minus the fee — should succeed
     const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     tx1.signTransaction(alice);
-    expect(() => chain.createTransaction(tx1)).not.toThrow();
+    await expect(chain.createTransaction(tx1)).resolves.not.toThrow();
 
     // Second tx tries to spend again before it's mined — should fail
     const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 1, fee);
     tx2.signTransaction(alice);
-    expect(() => chain.createTransaction(tx2)).toThrow('Not enough balance');
+    await expect(chain.createTransaction(tx2)).rejects.toThrow('Not enough balance');
   });
 
-  test('createTransaction() rejects floating point amounts', () => {
-    chain.minePendingTransactions(alice.getPublic('hex'));
+  test('createTransaction() rejects floating point amounts', async () => {
+    await chain.minePendingTransactions(alice.getPublic('hex'));
     const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10.5, 0, 1000);
     tx.signTransaction(alice);
-    expect(() => chain.createTransaction(tx)).toThrow('atomic units');
+    await expect(chain.createTransaction(tx)).rejects.toThrow('atomic units');
   });
 });
