@@ -13,7 +13,6 @@ export class Blockchain {
   private mempool: Mempool;
   public miningReward: number;
   private db: Level<string, any> | null = null;
-  private storagePath: string | null = null;
   private knownSignatures: Set<string> = new Set();
   private ledger: Map<string, number> = new Map();
   private accountNonces: Map<string, number> = new Map();
@@ -39,7 +38,6 @@ export class Blockchain {
 
   public async setStoragePath(id: string | number): Promise<void> {
     const dbPath = path.join(__dirname, '..', 'data', `blockchain_db_${id}`);
-    this.storagePath = dbPath;
     this.db = new Level(dbPath, { valueEncoding: 'json' });
     await this.loadFromDisk();
   }
