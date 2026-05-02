@@ -65,7 +65,7 @@ export class Blockchain {
         }
 
         await batch.write();
-        
+
         // Only update the lastSavedIndex after a successful write
         this.lastSavedIndex = this.chain.length - 1;
       } catch (err) {
@@ -79,10 +79,24 @@ export class Blockchain {
   private async loadFromDisk(): Promise<void> {
     if (!this.db) return;
     try {
-      const latestIndexStr = await this.db.get('meta:latestIndex');
-      const latestIndex = parseInt(latestIndexStr);
-      this.lastSavedIndex = latestIndex;
-      
+      let latestIndex = 0;
+      try {
+        const latestIndexStr = await this.db.get('meta:latestIndex');
+        if (!latestIndexStr || isNaN(parseInt(latestIndexStr))) {
+          throw { notFound: true }; // Force fresh start if metadata is corrupted
+        }
+        latestIndex = parseInt(latestIndexStr);
+        this.lastSavedIndex = latestIndex;
+      } catch (err: any) {
+        if (err.notFound) {
+          Logger.log('No existing blockchain found or metadata corrupted. Starting fresh.');
+          this.chain = [this.createGenesisBlock()]; // Ensure genesis exists
+          await this.saveToDisk();
+          return;
+        }
+        throw err;
+      }
+
       const chain: Block[] = [];
       for (let i = 0; i <= latestIndex; i++) {
         const blockData = await this.db.get(`block:${i}`);
@@ -90,13 +104,26 @@ export class Blockchain {
       }
       this.chain = chain;
 
-      const mempoolData = await this.db.get('mempool');
-      this.mempool.setTransactions(mempoolData.map((tx: any) =>
-        Transaction.fromObject(tx)
-      ));
+      try {
+        const mempoolData = await this.db.get('mempool');
+        if (mempoolData && Array.isArray(mempoolData)) {
+          this.mempool.setTransactions(mempoolData.map((tx: any) =>
+            Transaction.fromObject(tx)
+          ));
+        }
+      } catch (err: any) {
+        if (!err.notFound) throw err;
+        Logger.log('No persisted mempool found, starting empty.');
+      }
 
-      const rewardStr = await this.db.get('meta:miningReward');
-      this.miningReward = parseFloat(rewardStr);
+      try {
+        const rewardStr = await this.db.get('meta:miningReward');
+        if (rewardStr) {
+          this.miningReward = parseFloat(rewardStr);
+        }
+      } catch (err: any) {
+        if (!err.notFound) throw err;
+      }
 
       // Rebuild stateful ledger and nonces from the trusted block history
       this.ledger = this.getLedger();
@@ -118,13 +145,8 @@ export class Blockchain {
         Logger.log(`Successfully loaded and verified blockchain from LevelDB (${this.chain.length} blocks)`);
       }
     } catch (err: any) {
-      if (err.code === 'LEVEL_NOT_FOUND') {
-        Logger.log('No existing blockchain found. Starting fresh.');
-        await this.saveToDisk();
-      } else {
-        Logger.error('Failed to load blockchain from LevelDB:', err);
-        await this.reset();
-      }
+      Logger.error('Failed to load blockchain from LevelDB:', err.message);
+      await this.reset();
     }
   }
 
@@ -283,14 +305,14 @@ export class Blockchain {
    */
   public getNextNonce(address: string): number {
     let nonce = this.accountNonces.get(address) || 0;
-    
+
     // Add pending transactions from this address
     for (const tx of this.mempool.getTransactions()) {
       if (tx.fromAddress === address) {
         nonce++;
       }
     }
-    
+
     return nonce;
   }
 
