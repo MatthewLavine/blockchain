@@ -3,8 +3,9 @@ import { Wallet, Shield, ShieldAlert, Copy, Check, Save, Clock, RefreshCw } from
 
 interface WalletCardProps {
   address: string;
-  balance: number;
   effectiveBalance: number;
+  netPending?: number;
+  hasPending?: boolean;
   walletType?: 'saved' | 'temporary';
   hasSavedWallet?: boolean;
   generateSavedWallet?: () => void;
@@ -14,8 +15,9 @@ interface WalletCardProps {
 
 export const WalletCard: React.FC<WalletCardProps> = ({ 
   address, 
-  balance,
   effectiveBalance,
+  netPending = 0,
+  hasPending = false,
   walletType = 'saved',
   hasSavedWallet = false,
   generateSavedWallet,
@@ -23,7 +25,6 @@ export const WalletCard: React.FC<WalletCardProps> = ({
   loadSavedWallet
 }) => {
   const [copied, setCopied] = useState(false);
-  const hasPendingSpends = Math.abs(balance - effectiveBalance) > 0.0000001;
 
   const handleCopy = () => {
     if (!address) return;
@@ -97,14 +98,14 @@ export const WalletCard: React.FC<WalletCardProps> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <label style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-          {hasPendingSpends ? 'Available Balance' : 'Current Balance'}
+          {hasPending ? 'Available Balance' : 'Current Balance'}
         </label>
         <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
           {Number(effectiveBalance).toLocaleString(undefined, { maximumFractionDigits: 8 })} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>AGC</span>
         </div>
-        {hasPendingSpends && (
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>Total Mined: {Number(balance).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
+        {hasPending && (
+          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: netPending > 0 ? 'var(--accent-success)' : 'var(--accent-warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Pending: {netPending > 0 ? '+' : ''}{Number(netPending).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
           </div>
         )}
       </div>

@@ -20,8 +20,9 @@ function App() {
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
   const {
     walletAddress,
-    balance,
     effectiveBalance,
+    netPending,
+    hasPending,
     blocks,
     pendingTransactions,
     isLoading,
@@ -105,8 +106,9 @@ function App() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
           <WalletCard 
             address={walletAddress} 
-            balance={balance} 
             effectiveBalance={effectiveBalance} 
+            netPending={netPending}
+            hasPending={hasPending}
             walletType={walletType}
             hasSavedWallet={hasSavedWallet}
             generateSavedWallet={generateSavedWallet}
