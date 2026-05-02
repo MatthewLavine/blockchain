@@ -5,7 +5,6 @@ import { Mempool } from './Mempool';
 import { ChainValidator } from './ChainValidator';
 import { NETWORK_CONSTANTS } from './Constants';
 import { Level } from 'level';
-import * as fs from 'fs';
 import * as path from 'path';
 
 export class Blockchain {
