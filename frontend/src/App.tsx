@@ -67,17 +67,19 @@ function App() {
           <div className="glass-card" style={{ 
             border: '1px solid var(--accent-error)', 
             color: 'var(--accent-error)', 
-            background: isDarkMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+            background: isDarkMode ? 'rgba(239, 68, 68, 0.2)' : 'rgba(239, 68, 68, 0.12)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
             display: 'flex', 
             gap: '12px', 
             alignItems: 'center', 
             padding: '16px', 
-            boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)' 
+            boxShadow: '0 15px 35px -5px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.2)' 
           }}>
             <AlertCircle size={20} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Error</div>
-              <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{error}</p>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '2px' }}>Error</div>
+              <p style={{ fontSize: '0.85rem', lineHeight: '1.4', fontWeight: 500 }}>{error}</p>
             </div>
           </div>
         )}
@@ -85,17 +87,19 @@ function App() {
           <div className="glass-card" style={{ 
             border: '1px solid var(--accent-success)', 
             color: 'var(--accent-success)', 
-            background: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)',
+            background: isDarkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.12)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
             display: 'flex', 
             gap: '12px', 
             alignItems: 'center', 
             padding: '16px', 
-            boxShadow: '0 10px 30px -5px rgba(0,0,0,0.3)' 
+            boxShadow: '0 15px 35px -5px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.2)' 
           }}>
             <CheckCircle2 size={20} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Success</div>
-              <p style={{ fontSize: '0.8rem', opacity: 0.9 }}>{success}</p>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '2px' }}>Success</div>
+              <p style={{ fontSize: '0.85rem', lineHeight: '1.4', fontWeight: 500 }}>{success}</p>
             </div>
           </div>
         )}
