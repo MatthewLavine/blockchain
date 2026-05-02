@@ -7,7 +7,7 @@ export const NETWORK_CONSTANTS = {
     INITIAL_MINING_REWARD: 100 * 1000000, // 100 AGC in atomic units
     HALVING_INTERVAL: 100,
     MAX_BLOCK_TRANSACTIONS: 1000,
-    // TODO: Add MIN_TRANSACTION_FEE constant
+    MIN_TRANSACTION_FEE: 1000, // 0.001 AGC in atomic units
     GENESIS_DATE: "2026-01-01",
     GENESIS_PREVIOUS_HASH: "0",
     calculateMiningReward: (blockIndex: number): number => {

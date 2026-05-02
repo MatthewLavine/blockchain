@@ -85,6 +85,21 @@ export const BlockModal: React.FC<BlockModalProps> = ({ block, onClose }) => {
           <h3 style={{ fontSize: '1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
             Transactions ({block.transactions.length})
           </h3>
+
+          {/* Total Fees Summary */}
+          {block.index > 0 && (() => {
+            const totalFees = block.transactions
+              .filter(tx => tx.fromAddress !== null)
+              .reduce((sum, tx) => sum + tx.fee, 0);
+            return totalFees > 0 ? (
+              <div className="glass-card" style={{ padding: '12px', background: 'rgba(251, 191, 36, 0.05)', border: '1px solid rgba(251, 191, 36, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Fees Collected</span>
+                <span style={{ fontWeight: 700, color: 'var(--accent-warning)' }}>
+                  {Number(totalFees).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC
+                </span>
+              </div>
+            ) : null;
+          })()}
           
           {block.transactions.length === 0 ? (
             <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
@@ -95,10 +110,17 @@ export const BlockModal: React.FC<BlockModalProps> = ({ block, onClose }) => {
               <div key={i} className="glass-card" style={{ padding: '15px', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ fontWeight: 700, color: 'var(--accent-primary)', fontSize: '1rem' }}>
-                    {tx.amount} AGC
+                    {Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC
                   </div>
-                  <div style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', padding: '2px 8px', borderRadius: '4px' }}>
-                    Confirmed
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {tx.fromAddress && (
+                      <span style={{ fontSize: '0.65rem', color: 'var(--accent-warning)', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                        Fee: {Number(tx.fee).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC
+                      </span>
+                    )}
+                    <div style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-success)', padding: '2px 8px', borderRadius: '4px' }}>
+                      Confirmed
+                    </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>

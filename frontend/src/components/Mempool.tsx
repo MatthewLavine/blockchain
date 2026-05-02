@@ -104,7 +104,12 @@ export const Mempool: React.FC<MempoolProps> = ({ transactions, walletAddress, o
                         <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
                           {Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC
                         </div>
-                        <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'var(--input-bg)', padding: '2px 6px', borderRadius: '4px' }}>Pending</span>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--accent-warning)', background: 'rgba(251, 191, 36, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                            Fee: {Number(tx.fee).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          </span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'var(--input-bg)', padding: '2px 6px', borderRadius: '4px' }}>Pending</span>
+                        </div>
                       </div>
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>

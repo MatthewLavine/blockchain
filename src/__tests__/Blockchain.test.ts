@@ -36,13 +36,13 @@ describe('Blockchain', () => {
   // ── createTransaction ─────────────────────────────────────────────────────
 
   test('createTransaction() rejects an unsigned transaction', () => {
-    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10);
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10, 0, 1000);
     // No signature — should throw
     expect(() => chain.createTransaction(tx)).toThrow();
   });
 
   test('createTransaction() rejects a transaction with insufficient funds', () => {
-    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 9999);
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 9999 * 1000000, 0, 1000);
     tx.signTransaction(alice);
     expect(() => chain.createTransaction(tx)).toThrow('Not enough balance');
   });
@@ -54,26 +54,35 @@ describe('Blockchain', () => {
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
     expect(aliceBalance).toBeGreaterThan(0);
 
-    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    // Spend amount leaving at least the fee behind
+    const fee = 1000;
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     tx.signTransaction(alice);
     expect(() => chain.createTransaction(tx)).not.toThrow();
     expect(chain.pendingTransactions.length).toBeGreaterThan(0);
   });
 
+  test('createTransaction() rejects a transaction with fee too low', () => {
+    chain.minePendingTransactions(alice.getPublic('hex'));
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 1000, 0, 0);
+    tx.signTransaction(alice);
+    expect(() => chain.createTransaction(tx)).toThrow('fee too low');
+  });
+
   test('createTransaction() rejects an invalid sender address', () => {
-    const tx = new Transaction('bad-address', bob.getPublic('hex'), 10);
+    const tx = new Transaction('bad-address', bob.getPublic('hex'), 10, 0, 1000);
     // Since it's malformed, we don't even need to sign it to trigger the format check
     expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
   });
 
   test('createTransaction() rejects an invalid recipient address', () => {
-    const tx = new Transaction(alice.getPublic('hex'), 'bad-address', 10);
+    const tx = new Transaction(alice.getPublic('hex'), 'bad-address', 10, 0, 1000);
     tx.signTransaction(alice);
     expect(() => chain.createTransaction(tx)).toThrow('Invalid recipient address format');
   });
 
   test('createTransaction() rejects a null sender address (system-only)', () => {
-    const tx = new Transaction(null, bob.getPublic('hex'), 10);
+    const tx = new Transaction(null, bob.getPublic('hex'), 10, 0, 1000);
     expect(() => chain.createTransaction(tx)).toThrow('Invalid sender address format');
   });
 
@@ -130,7 +139,8 @@ describe('Blockchain', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
-    const userTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    const fee = 1000;
+    const userTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     userTx.signTransaction(alice);
     chain.createTransaction(userTx);
 
@@ -141,11 +151,12 @@ describe('Blockchain', () => {
 
   test('minePendingTransactions() only removes transactions that were included in the block', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
-    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10, 0);
+    const fee = 1000;
+    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000, 0, fee);
     tx1.signTransaction(alice);
     chain.createTransaction(tx1);
 
-    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20, 1);
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 20000, 1, fee);
     tx2.signTransaction(alice);
     chain.createTransaction(tx2);
 
@@ -160,7 +171,7 @@ describe('Blockchain', () => {
 
   test('addBlock() rejects blocks with invalid transactions', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
-    const badTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000000); // too much money
+    const badTx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10000000, 0, 1000); // too much money
     badTx.signTransaction(alice);
     
     const badBlock = new Block(chain.chain.length, Date.now(), [badTx], chain.getLatestBlock().hash);
@@ -178,10 +189,10 @@ describe('Blockchain', () => {
     const initialBalance = chain.getBalanceOfAddress(address);
     
     // 2. Create a block with one valid tx and one invalid tx (insufficient funds)
-    const validTx = new Transaction(address, recipient, 1000, 0);
+    const validTx = new Transaction(address, recipient, 1000, 0, 1000);
     validTx.signTransaction(alice);
     
-    const invalidTx = new Transaction(address, recipient, initialBalance + 1, 1); 
+    const invalidTx = new Transaction(address, recipient, initialBalance + 1, 1, 1000); 
     invalidTx.signTransaction(alice);
     
     const block = new Block(chain.chain.length, Date.now(), [validTx, invalidTx], chain.getLatestBlock().hash);
@@ -217,21 +228,21 @@ describe('Blockchain', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
     const aliceBalance = chain.getBalanceOfAddress(alice.getPublic('hex'));
 
-    // First tx spends the full balance — should succeed
-    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance);
+    const fee = 1000;
+    // First tx spends balance minus the fee — should succeed
+    const tx1 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 0, fee);
     tx1.signTransaction(alice);
     expect(() => chain.createTransaction(tx1)).not.toThrow();
 
-    // Second tx tries to spend the same balance before it's mined — should fail
-    // We must provide the correct next nonce (1) even for a failing transaction
-    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance, 1);
+    // Second tx tries to spend again before it's mined — should fail
+    const tx2 = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), aliceBalance - fee, 1, fee);
     tx2.signTransaction(alice);
     expect(() => chain.createTransaction(tx2)).toThrow('Not enough balance');
   });
 
   test('createTransaction() rejects floating point amounts', () => {
     chain.minePendingTransactions(alice.getPublic('hex'));
-    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10.5);
+    const tx = new Transaction(alice.getPublic('hex'), bob.getPublic('hex'), 10.5, 0, 1000);
     tx.signTransaction(alice);
     expect(() => chain.createTransaction(tx)).toThrow('atomic units');
   });

@@ -19,7 +19,7 @@ describe('Blockchain Security', () => {
     });
 
     test('should prevent replay attacks in addBlock', () => {
-        const tx = new Transaction(myAddress, otherAddress, 10);
+        const tx = new Transaction(myAddress, otherAddress, 10, 0, 1000);
         tx.signTransaction(myKey);
         
         antigravity.createTransaction(tx);
@@ -45,14 +45,14 @@ describe('Blockchain Security', () => {
     });
 
     test('should prevent intra-block replay attacks (duplicate tx in same block)', () => {
-        const tx = new Transaction(myAddress, otherAddress, 10);
+        const tx = new Transaction(myAddress, otherAddress, 10, 0, 1000);
         tx.signTransaction(myKey);
         
         // Block contains the SAME transaction twice
         const maliciousBlock = new Block(
             antigravity.chain.length,
             Date.now(),
-            [tx, tx, new Transaction(null, myAddress, 100 * 1000000)],
+            [tx, tx, new Transaction(null, myAddress, 100 * 1000000, 0, 0)],
             antigravity.getLatestBlock().hash
         );
         maliciousBlock.mineBlock(antigravity.difficulty);
@@ -70,28 +70,29 @@ describe('Blockchain Security', () => {
         // tx2: from="ab", to="cdef", amount=1, ts=2 -> "ab|cdef|1|2"
         // With delimiters, these hashes will be different.
         
-        const tx1 = new Transaction('abc', 'def', 1);
+        const tx1 = new Transaction('abc', 'def', 1, 0, 1000);
         tx1.timestamp = 2;
         
-        const tx2 = new Transaction('ab', 'cdef', 1);
+        const tx2 = new Transaction('ab', 'cdef', 1, 0, 1000);
         tx2.timestamp = 2;
         
         expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
     });
 
     test('should sync mempool when a block is added externally', () => {
-        const tx = new Transaction(myAddress, otherAddress, 5);
+        const tx = new Transaction(myAddress, otherAddress, 5, 0, 1000);
         tx.signTransaction(myKey);
         
         antigravity.createTransaction(tx);
         expect(antigravity.pendingTransactions.length).toBe(1);
 
         // Simulate a peer mining this transaction first
-        const rewardAmount = 100 * 1000000;
+        // Reward = base reward + fee from tx
+        const rewardAmount = 100 * 1000000 + 1000;
         const peerBlock = new Block(
             antigravity.chain.length,
             Date.now(),
-            [tx, new Transaction(null, otherAddress, rewardAmount)],
+            [tx, new Transaction(null, otherAddress, rewardAmount, 0, 0)],
             antigravity.getLatestBlock().hash
         );
         peerBlock.mineBlock(antigravity.difficulty);

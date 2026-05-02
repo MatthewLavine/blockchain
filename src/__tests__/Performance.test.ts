@@ -31,7 +31,7 @@ describe('Blockchain Performance Benchmark', () => {
     for (let i = 0; i < numBlocks; i++) {
       for (let j = 0; j < txsPerBlock; j++) {
         // Mock transaction that doesn't need signing
-        const tx = new Transaction(address, recipient, 1);
+        const tx = new Transaction(address, recipient, 1, 0, 1000);
         (chain as any).pendingTransactions.push(tx);
       }
       chain.minePendingTransactions(address);

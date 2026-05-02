@@ -20,7 +20,9 @@ function App() {
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
   const {
     walletAddress,
-    balance,
+    effectiveBalance,
+    netPending,
+    hasPending,
     blocks,
     pendingTransactions,
     isLoading,
@@ -33,12 +35,15 @@ function App() {
     addPeer,
     peers,
     miningReward,
+    minTransactionFee,
     walletType,
     hasSavedWallet,
     generateSavedWallet,
     generateTemporaryWallet,
     loadSavedWallet
   } = useBlockchain();
+
+  const pendingFees = pendingTransactions.reduce((sum, tx) => sum + tx.fee, 0);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -101,15 +106,16 @@ function App() {
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
           <WalletCard 
             address={walletAddress} 
-            balance={balance} 
+            effectiveBalance={effectiveBalance} 
+            netPending={netPending}
+            hasPending={hasPending}
             walletType={walletType}
             hasSavedWallet={hasSavedWallet}
             generateSavedWallet={generateSavedWallet}
             generateTemporaryWallet={generateTemporaryWallet}
             loadSavedWallet={loadSavedWallet}
           />
-          <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
-          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} />
+          <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} minFee={minTransactionFee} />
         </section>
 
         {/* Column 2: Blockchain Ledger */}
@@ -119,6 +125,7 @@ function App() {
 
         {/* Column 3: Network Feeds */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
+          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} pendingFees={pendingFees} />
           <Mempool 
             transactions={pendingTransactions} 
             walletAddress={walletAddress}

@@ -5,12 +5,13 @@ interface MiningCardProps {
   mineBlock: () => Promise<void>;
   isMining: boolean;
   reward: number;
+  pendingFees: number;
 }
 
-export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, reward }) => {
+export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, reward, pendingFees }) => {
   return (
-    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -21,9 +22,9 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
           borderRadius: '10px', 
           color: 'var(--accent-primary)' 
         }}>
-          <Cpu size={18} />
+          <Cpu size={14} />
         </div>
-        <h2 style={{ fontSize: '1rem' }}>Mining</h2>
+        <h2 style={{ fontSize: '0.9rem' }}>Mining</h2>
       </div>
 
       <button 
@@ -35,14 +36,13 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
           alignItems: 'center', 
           justifyContent: 'center',
           width: '100%',
-          flex: 1,
-          gap: '8px', 
+          gap: '6px', 
           cursor: isMining ? 'default' : 'pointer',
           background: isMining 
             ? 'linear-gradient(135deg, #059669 0%, #065f46 100%)' 
             : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          borderRadius: '16px',
-          padding: '24px',
+          borderRadius: '12px',
+          padding: '20px 16px',
           color: 'white',
           boxShadow: isMining 
             ? '0 0 20px rgba(16, 185, 129, 0.4)' 
@@ -67,15 +67,18 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
           {isMining && (
             <div className="animate-spin" style={{ display: 'flex', flexShrink: 0 }}>
-              <Cpu size={24} />
+              <Cpu size={18} />
             </div>
           )}
           <div style={{ textAlign: isMining ? 'left' : 'center' }}>
-            <h3 style={{ marginBottom: '2px', fontSize: '1.1rem', color: 'white', fontWeight: 700, lineHeight: 1.2 }}>
-              {isMining ? 'Mining Block...' : 'Mine Next Block'}
+            <h3 style={{ marginBottom: '1px', fontSize: '0.9rem', color: 'white', fontWeight: 700, lineHeight: 1.2 }}>
+              {isMining ? 'Mining...' : 'Mine Next Block'}
             </h3>
-            <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.8rem' }}>
-              {isMining ? 'Processing...' : `Earn ${reward} AGC Reward`}
+            <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.7rem' }}>
+              {isMining
+                ? 'Processing...'
+                : `${Number(reward + pendingFees).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC Reward`
+              }
             </p>
           </div>
         </div>
