@@ -103,11 +103,13 @@ export const WalletCard: React.FC<WalletCardProps> = ({
         <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
           {Number(effectiveBalance).toLocaleString(undefined, { maximumFractionDigits: 8 })} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>AGC</span>
         </div>
-        {hasPending && (
-          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: netPending > 0 ? 'var(--accent-success)' : 'var(--accent-warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>Pending: {netPending > 0 ? '+' : ''}{Number(netPending).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
-          </div>
-        )}
+        <div style={{ height: '1.2rem', display: 'flex', alignItems: 'center' }}>
+          {hasPending && (
+            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: netPending > 0 ? 'var(--accent-success)' : 'var(--accent-warning)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span>Pending: {netPending > 0 ? '+' : ''}{Number(netPending).toLocaleString(undefined, { maximumFractionDigits: 8 })} AGC</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
