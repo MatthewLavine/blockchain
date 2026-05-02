@@ -11,6 +11,7 @@ export interface Transaction {
   fromAddress: string | null;
   toAddress: string;
   amount: number;
+  fee: number;
   timestamp: number;
   nonce: number;
   signature: string;
@@ -40,6 +41,7 @@ export function useBlockchain() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMining, setIsMining] = useState(false);
   const [miningReward, setMiningReward] = useState(100);
+  const [minTransactionFee, setMinTransactionFee] = useState(0.001);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -118,7 +120,8 @@ export function useBlockchain() {
         ...block,
         transactions: block.transactions.map(tx => ({
           ...tx,
-          amount: tx.amount / UNITS_PER_COIN
+          amount: tx.amount / UNITS_PER_COIN,
+          fee: tx.fee / UNITS_PER_COIN
         }))
       }));
 
@@ -126,11 +129,13 @@ export function useBlockchain() {
       setBalance(balanceRes.data.balance / UNITS_PER_COIN);
       setPendingTransactions(pendingRes.data.map((tx: Transaction) => ({
         ...tx,
-        amount: tx.amount / UNITS_PER_COIN
+        amount: tx.amount / UNITS_PER_COIN,
+        fee: tx.fee / UNITS_PER_COIN
       })));
 
       setPeers(peersRes.data);
       setMiningReward(infoRes.data.miningReward / UNITS_PER_COIN);
+      setMinTransactionFee(infoRes.data.minTransactionFee / UNITS_PER_COIN);
       setError('');
     } catch (err) {
       if (!silent) setError(handleApiError(err, 'Failed to connect to the blockchain node.'));
@@ -149,7 +154,7 @@ export function useBlockchain() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const sendTransaction = async (recipient: string, amount: number) => {
+  const sendTransaction = async (recipient: string, amount: number, fee: number) => {
     if (!keyPair || !recipient || !amount) return false;
     try {
       // 1. Fetch the next expected nonce for this account
@@ -159,10 +164,11 @@ export function useBlockchain() {
       const timestamp = Date.now();
       // Convert user input (AGC) to atomic units for the backend
       const atomicAmount = Math.round(amount * UNITS_PER_COIN);
-      const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, timestamp, nonce };
+      const atomicFee = Math.round(fee * UNITS_PER_COIN);
+      const tx = { fromAddress: walletAddress, toAddress: recipient, amount: atomicAmount, fee: atomicFee, timestamp, nonce };
 
-      // 2. Hash the transaction (including the nonce)
-      const hash = SHA256(`${tx.fromAddress}|${tx.toAddress}|${tx.amount}|${tx.timestamp}|${tx.nonce}`).toString();
+      // 2. Hash the transaction (must include fee to match backend calculateHash)
+      const hash = SHA256(`${tx.fromAddress}|${tx.toAddress}|${tx.amount}|${tx.fee}|${tx.timestamp}|${tx.nonce}`).toString();
 
       // 3. Sign the hash
       const signature = keyPair.sign(hash, 'hex').toDER('hex');
@@ -240,6 +246,7 @@ export function useBlockchain() {
     addPeer,
     resetChain,
     miningReward,
+    minTransactionFee,
     walletType,
     hasSavedWallet,
     generateSavedWallet,

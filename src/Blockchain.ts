@@ -93,19 +93,6 @@ export class Blockchain {
   }
 
   /**
-   * Resets the chain to the Genesis block and clears all transactions.
-   * This is immediately persisted to disk.
-   */
-  public reset(): void {
-    this.chain = [this.createGenesisBlock()];
-    this.mempool.clear();
-    this.knownSignatures.clear();
-    this.ledger.clear();
-    this.accountNonces.clear();
-    this.saveToDisk();
-  }
-
-  /**
    * The first block of a blockchain is special. It doesn't have a previous block to link to.
    * This is called the "Genesis Block". We have to create it manually.
    */
@@ -125,19 +112,42 @@ export class Blockchain {
     return this.chain[this.chain.length - 1];
   }
 
+  /**
+   * Resets the entire blockchain to its initial state (genesis only).
+   * WARNING: This wipes all transaction history and balances.
+   */
+  public reset(): void {
+    this.chain = [this.createGenesisBlock()];
+    this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
+    this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
+    this.mempool.clear();
+    this.ledger.clear();
+    this.knownSignatures.clear();
+    this.accountNonces.clear();
+    this.saveToDisk();
+    Logger.log('Blockchain reset to genesis state.');
+  }
+
 
   /**
    * Takes all pending transactions, puts them in a Block, and mines it.
    * @param miningRewardAddress The wallet address to send the mining reward to.
    */
   public minePendingTransactions(miningRewardAddress: string): void {
-    // 1. Create the reward transaction for the miner
+    // 1. Create the reward transaction for the miner (base reward + all pending fees)
     const nextBlockIndex = this.chain.length;
     const currentReward = NETWORK_CONSTANTS.calculateMiningReward(nextBlockIndex);
-    const rewardTx = new Transaction(null, miningRewardAddress, currentReward);
+
+    // Select highest-fee transactions up to the block size limit
+    const maxTxPerBlock = NETWORK_CONSTANTS.MAX_BLOCK_TRANSACTIONS - 1;
+    const selectedTxs = this.mempool.getTransactionsByPriority(maxTxPerBlock);
+
+    // Sum fees from selected transactions only
+    const totalFees = selectedTxs.reduce((sum, tx) => sum + tx.fee, 0);
+    const rewardTx = new Transaction(null, miningRewardAddress, currentReward + totalFees, 0, 0);
 
     // 2. Combine with other pending transactions
-    const transactionsToMine = [...this.mempool.getTransactions(), rewardTx];
+    const transactionsToMine = [...selectedTxs, rewardTx];
 
     // 3. Create and mine the block
     const block = new Block(this.chain.length, Date.now(), transactionsToMine, this.getLatestBlock().hash);
@@ -210,7 +220,7 @@ export class Blockchain {
     for (const tx of block.transactions) {
       if (tx.fromAddress !== null) {
         const senderBalance = this.ledger.get(tx.fromAddress) || 0;
-        this.ledger.set(tx.fromAddress, senderBalance - tx.amount);
+        this.ledger.set(tx.fromAddress, senderBalance - tx.amount - tx.fee);
       }
       const recipientBalance = this.ledger.get(tx.toAddress) || 0;
       this.ledger.set(tx.toAddress, recipientBalance + tx.amount);
@@ -255,7 +265,13 @@ export class Blockchain {
    * It enforces that the transaction must be signed, valid, and the sender has enough funds!
    */
   public createTransaction(transaction: Transaction): void {
-    // TODO: Implement transaction fees to prevent mempool spam DoS attacks
+    // Enforce minimum transaction fee
+    if (transaction.fee < NETWORK_CONSTANTS.MIN_TRANSACTION_FEE) {
+      throw new Error(
+        `Transaction fee too low. Minimum fee is ${NETWORK_CONSTANTS.MIN_TRANSACTION_FEE} atomic units (${NETWORK_CONSTANTS.MIN_TRANSACTION_FEE / NETWORK_CONSTANTS.UNITS_PER_COIN} AGC).`
+      );
+    }
+
     if (transaction.fromAddress === null || !Transaction.isValidAddress(transaction.fromAddress)) {
       throw new Error('Invalid sender address format');
     }
@@ -293,11 +309,11 @@ export class Blockchain {
     let currentBalance = this.getBalanceOfAddress(transaction.fromAddress);
     for (const pendingTx of this.mempool.getTransactions()) {
       if (pendingTx.fromAddress === transaction.fromAddress) {
-        currentBalance -= pendingTx.amount;
+        currentBalance -= (pendingTx.amount + pendingTx.fee);
       }
     }
 
-    if (currentBalance < transaction.amount) {
+    if (currentBalance < transaction.amount + transaction.fee) {
       throw new Error('Not enough balance to complete this transaction');
     }
 
@@ -322,7 +338,7 @@ export class Blockchain {
       for (const tx of block.transactions) {
         if (tx.fromAddress !== null) {
           const senderBalance = ledger.get(tx.fromAddress) || 0;
-          ledger.set(tx.fromAddress, senderBalance - tx.amount);
+          ledger.set(tx.fromAddress, senderBalance - tx.amount - tx.fee);
         }
         const recipientBalance = ledger.get(tx.toAddress) || 0;
         ledger.set(tx.toAddress, recipientBalance + tx.amount);

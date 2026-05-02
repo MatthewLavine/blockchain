@@ -4,6 +4,7 @@ import { Blockchain } from './Blockchain';
 import { Transaction } from './Transaction';
 import { P2PServer } from './P2PServer';
 import { Logger } from './Logger';
+import { NETWORK_CONSTANTS } from './Constants';
 import rateLimit from 'express-rate-limit';
 
 import { getLandingPage } from './LandingPage';
@@ -84,7 +85,8 @@ app.get('/info', (req, res) => {
   res.json({
     chainLength: myCoin.chain.length,
     miningReward: myCoin.miningReward,
-    difficulty: myCoin.difficulty
+    difficulty: myCoin.difficulty,
+    minTransactionFee: NETWORK_CONSTANTS.MIN_TRANSACTION_FEE
   });
 });
 
@@ -129,7 +131,7 @@ app.post('/reset', resetLimiter, (req, res) => {
   if (process.env.ALLOW_REMOTE_RESET === 'true') {
     myCoin.reset();
     p2pServer.broadcastReset();
-    res.json({ message: 'Blockchain has been reset successfully.' });
+    res.json({ message: 'Blockchain has been reset to genesis state.' });
   } else {
     res.status(403).json({
       error: 'Reset forbidden',
@@ -179,9 +181,9 @@ app.post('/transaction', transactionLimiter, (req, res) => {
     if (!req.body) {
       return res.status(400).json({ error: 'Missing request body' });
     }
-    const { fromAddress, toAddress, amount, signature } = req.body;
+    const { fromAddress, toAddress, amount, fee, signature } = req.body;
 
-    if (!fromAddress || !toAddress || amount === undefined || !signature) {
+    if (!fromAddress || !toAddress || amount === undefined || fee === undefined || !signature) {
       return res.status(400).json({ error: 'Missing required transaction fields' });
     }
 
@@ -247,6 +249,7 @@ const server = app.listen(port, () => {
     p2pServer.connectToSeed(seedNode);
   }
 });
+
 
 /**
  * Handle graceful shutdown

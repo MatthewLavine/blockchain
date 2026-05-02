@@ -35,7 +35,7 @@ describe('Block', () => {
   test('calculateHash() changes when transactions change', () => {
     const sender = ec.genKeyPair();
     const recipient = ec.genKeyPair();
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     tx.signTransaction(sender);
 
     const empty = new Block(1, 1000, [], '0');
@@ -90,7 +90,7 @@ describe('Block', () => {
   test('fromObject() hydrates nested transactions so isValid() still works', () => {
     const sender = ec.genKeyPair();
     const recipient = ec.genKeyPair();
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     tx.signTransaction(sender);
 
     const original = new Block(1, Date.now(), [tx], '0');

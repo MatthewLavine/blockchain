@@ -94,8 +94,15 @@ export const ActivityList: React.FC<ActivityListProps> = ({ blocks, walletAddres
                     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, gap: '2px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ fontSize: '0.8125rem', fontWeight: 600 }}>{isMiningReward ? 'Mining Reward' : (isSent ? 'Sent' : 'Received')}</div>
-                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)', whiteSpace: 'nowrap' }}>
-                          {isSent && !isMiningReward ? '-' : '+'}{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: isSent && !isMiningReward ? '#f87171' : 'var(--accent-success)', whiteSpace: 'nowrap' }}>
+                            {isSent && !isMiningReward ? '-' : '+'}{Number(tx.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                          </div>
+                          {isSent && !isMiningReward && tx.fee > 0 && (
+                            <div style={{ fontSize: '0.6rem', color: 'var(--accent-warning)' }}>
+                              + {Number(tx.fee).toLocaleString(undefined, { maximumFractionDigits: 6 })} fee
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>

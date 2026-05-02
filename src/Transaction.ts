@@ -7,6 +7,7 @@ export class Transaction {
   public fromAddress: string | null;
   public toAddress: string;
   public amount: number;
+  public fee: number;
   public timestamp: number;
   public nonce: number;
   public signature: string;
@@ -16,11 +17,13 @@ export class Transaction {
    * @param toAddress The recipient's public key (wallet address).
    * @param amount The number of coins being sent.
    * @param nonce The sequential number for this account's transactions.
+   * @param fee The transaction fee paid to the miner (in atomic units).
    */
-  constructor(fromAddress: string | null, toAddress: string, amount: number, nonce: number = 0) {
+  constructor(fromAddress: string | null, toAddress: string, amount: number, nonce: number = 0, fee: number) {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
+    this.fee = fee;
     this.timestamp = Date.now();
     this.nonce = nonce;
     this.signature = ''; // Will be populated when the transaction is signed
@@ -33,7 +36,7 @@ export class Transaction {
   public calculateHash(): string {
     return crypto
       .createHash('sha256')
-      .update(`${this.fromAddress}|${this.toAddress}|${this.amount}|${this.timestamp}|${this.nonce}`)
+      .update(`${this.fromAddress}|${this.toAddress}|${this.amount}|${this.fee}|${this.timestamp}|${this.nonce}`)
       .digest('hex');
   }
 
@@ -97,6 +100,11 @@ export class Transaction {
       throw new Error('Transaction amount must be a positive integer (atomic units)');
     }
 
+    // 4. Fee must be a non-negative integer
+    if (!Number.isInteger(this.fee) || this.fee < 0) {
+      throw new Error('Transaction fee must be a non-negative integer (atomic units)');
+    }
+
     // 4. If it has no signature, it's definitely invalid
     if (!this.signature || this.signature.length === 0) {
       throw new Error('No signature in this transaction');
@@ -115,7 +123,7 @@ export class Transaction {
    * Useful for hydrating data from JSON or P2P messages.
    */
   static fromObject(obj: Record<string, any>): Transaction {
-    const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount, obj.nonce ?? 0);
+    const tx = new Transaction(obj.fromAddress, obj.toAddress, obj.amount, obj.nonce ?? 0, obj.fee);
     tx.timestamp = obj.timestamp ?? Date.now();
     tx.signature = obj.signature;
     return tx;

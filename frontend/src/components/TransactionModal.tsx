@@ -78,7 +78,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction,
           background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)', 
           border: '1px solid var(--accent-primary)',
           textAlign: 'center',
-          marginBottom: '24px'
+          marginBottom: isMiningReward ? '24px' : '12px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'center', color: 'var(--accent-primary)', marginBottom: '8px' }}>
             <Coins size={32} />
@@ -87,6 +87,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({ transaction,
             {transaction.amount} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>AGC</span>
           </div>
         </div>
+
+        {/* Fee — only show for non-mining-reward transactions */}
+        {!isMiningReward && (
+          <div className="glass-card" style={{
+            padding: '12px 20px',
+            marginBottom: '24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'var(--glass-bg)'
+          }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Transaction Fee</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--accent-warning)' }}>
+              {Number(transaction.fee).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC
+            </span>
+          </div>
+        )}
 
         {/* Peer Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '24px' }}>

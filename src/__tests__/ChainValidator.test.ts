@@ -19,7 +19,8 @@ function makeGenesisBlock(): Block {
 function mineBlock(index: number, txs: Transaction[], previousHash: string, timestamp?: number): Block {
   // Every block MUST have a mining reward now
   const reward = NETWORK_CONSTANTS.calculateMiningReward(index);
-  const rewardTx = new Transaction(null, dummyMinerAddress, reward);
+  // Coinbase tx: fee=0 since coinbase transactions don't pay fees
+  const rewardTx = new Transaction(null, dummyMinerAddress, reward, 0, 0);
   const block = new Block(index, timestamp || Date.now(), [...txs, rewardTx], previousHash);
   block.mineBlock(1); // difficulty=1 for speed
   return block;
@@ -64,12 +65,12 @@ describe('ChainValidator', () => {
   test('rejects a chain containing a block with an invalid transaction', () => {
     const sender = ec.genKeyPair();
     const recipient = ec.genKeyPair();
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     tx.signTransaction(sender);
     // Tamper the transaction amount after signing
     (tx as any).amount = 9999;
 
-    const rewardTx = new Transaction(null, dummyMinerAddress, 100);
+    const rewardTx = new Transaction(null, dummyMinerAddress, 100, 0, 0);
     const block1 = new Block(1, Date.now(), [tx, rewardTx], genesis.hash);
     block1.mineBlock(1);
 
@@ -94,15 +95,16 @@ describe('ChainValidator', () => {
   });
 
   test('validateBlock() fails if multiple mining rewards are present', () => {
-    const tx1 = new Transaction(null, dummyMinerAddress, NETWORK_CONSTANTS.INITIAL_MINING_REWARD);
-    const tx2 = new Transaction(null, dummyMinerAddress, NETWORK_CONSTANTS.INITIAL_MINING_REWARD);
+    const tx1 = new Transaction(null, dummyMinerAddress, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 0, 0);
+    const tx2 = new Transaction(null, dummyMinerAddress, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 0, 0);
     const block1 = new Block(1, Date.now(), [tx1, tx2], genesis.hash);
     block1.mineBlock(1);
     expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
   });
 
   test('validateBlock() fails if mining reward amount is incorrect', () => {
-    const tx = new Transaction(null, dummyMinerAddress, 500); // Should be INITIAL_MINING_REWARD
+    // reward should be INITIAL_MINING_REWARD + 0 fees = INITIAL_MINING_REWARD
+    const tx = new Transaction(null, dummyMinerAddress, 500, 0, 0); // Should be INITIAL_MINING_REWARD
     const block1 = new Block(1, Date.now(), [tx], genesis.hash);
     block1.mineBlock(1);
     expect(ChainValidator.validateBlock(block1, genesis, NETWORK_CONSTANTS.INITIAL_MINING_REWARD, 1, new Map(), new Map())).toBe(false);
@@ -111,7 +113,7 @@ describe('ChainValidator', () => {
   test('validateBlock() fails if block exceeds MAX_BLOCK_TRANSACTIONS', () => {
     const manyTxs: Transaction[] = [];
     for (let i = 0; i < 1001; i++) {
-      manyTxs.push(new Transaction(null, dummyMinerAddress, 0));
+      manyTxs.push(new Transaction(null, dummyMinerAddress, 0, 0, 0));
     }
     const block1 = new Block(1, Date.now(), manyTxs, genesis.hash);
     block1.mineBlock(1);

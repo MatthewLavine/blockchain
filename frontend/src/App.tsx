@@ -33,12 +33,15 @@ function App() {
     addPeer,
     peers,
     miningReward,
+    minTransactionFee,
     walletType,
     hasSavedWallet,
     generateSavedWallet,
     generateTemporaryWallet,
     loadSavedWallet
   } = useBlockchain();
+
+  const pendingFees = pendingTransactions.reduce((sum, tx) => sum + tx.fee, 0);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -108,8 +111,8 @@ function App() {
             generateTemporaryWallet={generateTemporaryWallet}
             loadSavedWallet={loadSavedWallet}
           />
-          <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} />
-          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} />
+          <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} minFee={minTransactionFee} />
+          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} pendingFees={pendingFees} />
         </section>
 
         {/* Column 2: Blockchain Ledger */}

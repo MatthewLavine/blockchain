@@ -7,7 +7,7 @@ const ec = new EC('secp256k1');
 function makeTx(amount: number = 10): Transaction {
   const sender = ec.genKeyPair();
   const recipient = ec.genKeyPair();
-  const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), amount);
+  const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), amount, 0, 1000);
   tx.signTransaction(sender);
   return tx;
 }

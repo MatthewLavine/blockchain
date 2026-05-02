@@ -14,24 +14,24 @@ describe('Transaction', () => {
 
   test('is created with a timestamp', () => {
     const before = Date.now();
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     expect(tx.timestamp).toBeGreaterThanOrEqual(before);
     expect(tx.timestamp).toBeLessThanOrEqual(Date.now());
   });
 
   test('isValid() returns true for a properly signed transaction', () => {
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     tx.signTransaction(sender);
     expect(tx.isValid()).toBe(true);
   });
 
   test('isValid() throws if transaction has no signature', () => {
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     expect(() => tx.isValid()).toThrow('No signature');
   });
 
   test('isValid() returns false if transaction data is tampered after signing', () => {
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     tx.signTransaction(sender);
     // Tamper the amount after signing
     (tx as any).amount = 9999;
@@ -39,19 +39,19 @@ describe('Transaction', () => {
   });
 
   test('isValid() returns true for mining reward (null fromAddress)', () => {
-    const tx = new Transaction(null, recipient.getPublic('hex'), 100);
+    const tx = new Transaction(null, recipient.getPublic('hex'), 100, 0, 0);
     expect(tx.isValid()).toBe(true);
   });
 
   test('isValid() throws for zero or negative amounts', () => {
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 0);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 0, 0, 1000);
     tx.signTransaction(sender);
     // Reset signature to trigger the amount check path
-    const tx2 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), -10);
+    const tx2 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), -10, 0, 1000);
     tx2.signTransaction(sender);
     // amount check is only hit after signature check, so sign and then tamper
     expect(() => {
-      const bad = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+      const bad = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
       bad.signTransaction(sender);
       (bad as any).amount = 0;
       bad.isValid();
@@ -60,7 +60,7 @@ describe('Transaction', () => {
 
   test('fromObject() correctly hydrates all fields including timestamp', () => {
     const ts = 1700000000000;
-    const original = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 42);
+    const original = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 42, 0, 1000);
     original.timestamp = ts; // Set timestamp BEFORE signing
     original.signTransaction(sender);
     const plain = JSON.parse(JSON.stringify(original));
@@ -80,6 +80,7 @@ describe('Transaction', () => {
       fromAddress: null,
       toAddress: recipient.getPublic('hex'),
       amount: 100,
+      fee: 0,
       signature: '',
     });
     expect(tx.timestamp).toBeGreaterThanOrEqual(before);
@@ -89,21 +90,21 @@ describe('Transaction', () => {
 
   test('signTransaction() throws when signing with a key that does not match fromAddress', () => {
     const impersonator = ec.genKeyPair();
-    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
+    const tx = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
     // impersonator tries to sign a transaction from sender's address
     expect(() => tx.signTransaction(impersonator)).toThrow('You cannot sign transactions for other wallets!');
   });
 
   test('calculateHash() changes when amount changes', () => {
-    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
-    const tx2 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 999);
+    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
+    const tx2 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 999, 0, 1000);
     expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
   });
 
   test('calculateHash() changes when recipient changes', () => {
     const other = ec.genKeyPair();
-    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50);
-    const tx2 = new Transaction(sender.getPublic('hex'), other.getPublic('hex'), 50);
+    const tx1 = new Transaction(sender.getPublic('hex'), recipient.getPublic('hex'), 50, 0, 1000);
+    const tx2 = new Transaction(sender.getPublic('hex'), other.getPublic('hex'), 50, 0, 1000);
     expect(tx1.calculateHash()).not.toBe(tx2.calculateHash());
   });
 
@@ -119,12 +120,12 @@ describe('Transaction', () => {
   });
 
   test('isValid() throws for invalid sender address format', () => {
-    const tx = new Transaction('bad-address', recipient.getPublic('hex'), 50);
+    const tx = new Transaction('bad-address', recipient.getPublic('hex'), 50, 0, 1000);
     expect(() => tx.isValid()).toThrow('Invalid sender address format');
   });
 
   test('isValid() throws for invalid recipient address format', () => {
-    const tx = new Transaction(sender.getPublic('hex'), 'bad-address', 50);
+    const tx = new Transaction(sender.getPublic('hex'), 'bad-address', 50, 0, 1000);
     expect(() => tx.isValid()).toThrow('Invalid recipient address format');
   });
 });

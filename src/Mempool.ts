@@ -2,7 +2,7 @@ import { Transaction } from './Transaction';
 
 /**
  * Manages the pool of pending transactions (Mempool).
- * This will handle future fee-based sorting and size limiting.
+ * Handles fee-based priority sorting and transaction selection.
  */
 export class Mempool {
     private transactions: Transaction[] = [];
@@ -22,6 +22,13 @@ export class Mempool {
     }
 
     /**
+     * Clears all transactions from the pool
+     */
+    public clear(): void {
+        this.transactions = [];
+    }
+
+    /**
      * Returns all transactions currently in the pool
      */
     public getTransactions(): Transaction[] {
@@ -33,13 +40,6 @@ export class Mempool {
      */
     public setTransactions(transactions: Transaction[]): void {
         this.transactions = transactions;
-    }
-
-    /**
-     * Clears the pool entirely
-     */
-    public clear(): void {
-        this.transactions = [];
     }
 
     /**
@@ -56,6 +56,15 @@ export class Mempool {
      */
     public size(): number {
         return this.transactions.length;
+    }
+
+    /**
+     * Returns transactions sorted by fee descending (highest fee first) for priority mining.
+     * Optionally limited to a maximum count.
+     */
+    public getTransactionsByPriority(maxCount?: number): Transaction[] {
+        const sorted = [...this.transactions].sort((a, b) => b.fee - a.fee);
+        return maxCount ? sorted.slice(0, maxCount) : sorted;
     }
 
     /**

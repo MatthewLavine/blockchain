@@ -5,9 +5,10 @@ interface MiningCardProps {
   mineBlock: () => Promise<void>;
   isMining: boolean;
   reward: number;
+  pendingFees: number;
 }
 
-export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, reward }) => {
+export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, reward, pendingFees }) => {
   return (
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
@@ -75,7 +76,10 @@ export const MiningCard: React.FC<MiningCardProps> = ({ mineBlock, isMining, rew
               {isMining ? 'Mining Block...' : 'Mine Next Block'}
             </h3>
             <p style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.8rem' }}>
-              {isMining ? 'Processing...' : `Earn ${reward} AGC Reward`}
+              {isMining
+                ? 'Processing...'
+                : `Earn ${reward} AGC${pendingFees > 0 ? ` + ${Number(pendingFees).toLocaleString(undefined, { maximumFractionDigits: 6 })} AGC Fees` : ' Reward'}`
+              }
             </p>
           </div>
         </div>

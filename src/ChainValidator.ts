@@ -132,10 +132,7 @@ export class ChainValidator {
             // Count mining rewards (fromAddress === null)
             if (tx.fromAddress === null) {
                 miningRewards++;
-                // Verify reward amount
-                if (tx.amount !== expectedReward) {
-                    return false;
-                }
+                // Reward amount verified after all txs are processed (see below)
                 
                 // Add reward to recipient
                 const currentBalance = ledger.get(tx.toAddress) || 0;
@@ -143,12 +140,12 @@ export class ChainValidator {
             } else {
                 // Regular transaction: Check balance
                 const senderBalance = ledger.get(tx.fromAddress) || 0;
-                if (senderBalance < tx.amount) {
+                if (senderBalance < tx.amount + tx.fee) {
                     return false; // Sender has insufficient funds!
                 }
                 
-                // Transfer funds
-                ledger.set(tx.fromAddress, senderBalance - tx.amount);
+                // Transfer funds (fee is deducted from sender but not added to recipient; it goes to the miner via the reward tx)
+                ledger.set(tx.fromAddress, senderBalance - tx.amount - tx.fee);
                 const recipientBalance = ledger.get(tx.toAddress) || 0;
                 ledger.set(tx.toAddress, recipientBalance + tx.amount);
 
@@ -163,6 +160,15 @@ export class ChainValidator {
 
         // 4. Each block must have EXACTLY one mining reward
         if (miningRewards !== 1) {
+            return false;
+        }
+
+        // 5. Verify reward tx amount = block reward + total fees collected
+        const totalFees = block.transactions
+            .filter(tx => tx.fromAddress !== null)
+            .reduce((sum, tx) => sum + tx.fee, 0);
+        const rewardTx = block.transactions.find(tx => tx.fromAddress === null)!;
+        if (rewardTx.amount !== expectedReward + totalFees) {
             return false;
         }
 
