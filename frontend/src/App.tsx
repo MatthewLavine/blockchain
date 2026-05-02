@@ -116,7 +116,6 @@ function App() {
             loadSavedWallet={loadSavedWallet}
           />
           <TransactionForm sendTransaction={sendTransaction} isLoading={isLoading} minFee={minTransactionFee} />
-          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} pendingFees={pendingFees} />
         </section>
 
         {/* Column 2: Blockchain Ledger */}
@@ -126,6 +125,7 @@ function App() {
 
         {/* Column 3: Network Feeds */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'calc(100vh - 180px)', minHeight: '600px' }}>
+          <MiningCard mineBlock={mineBlock} isMining={isMining} reward={miningReward} pendingFees={pendingFees} />
           <Mempool 
             transactions={pendingTransactions} 
             walletAddress={walletAddress}
