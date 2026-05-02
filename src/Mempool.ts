@@ -58,13 +58,53 @@ export class Mempool {
         return this.transactions.length;
     }
 
-    /**
-     * Returns transactions sorted by fee descending (highest fee first) for priority mining.
-     * Optionally limited to a maximum count.
-     */
     public getTransactionsByPriority(maxCount?: number): Transaction[] {
-        const sorted = [...this.transactions].sort((a, b) => b.fee - a.fee);
-        return maxCount ? sorted.slice(0, maxCount) : sorted;
+        if (this.transactions.length === 0) return [];
+
+        // 1. Group transactions by sender and sort each group by nonce
+        const senderQueues = new Map<string, Transaction[]>();
+        for (const tx of this.transactions) {
+            const from = tx.fromAddress || 'unknown';
+            if (!senderQueues.has(from)) senderQueues.set(from, []);
+            senderQueues.get(from)!.push(tx);
+        }
+
+        // Sort each queue by nonce ascending
+        for (const queue of senderQueues.values()) {
+            queue.sort((a, b) => a.nonce - b.nonce);
+        }
+
+        const selectedTransactions: Transaction[] = [];
+        const limit = maxCount || Infinity;
+
+        // 2. Selection algorithm:
+        // Continually pick the highest-fee transaction that is currently "mineable"
+        // (i.e., it's the next nonce for that sender among the remaining transactions).
+        while (selectedTransactions.length < limit) {
+            let bestTx: Transaction | null = null;
+            let bestTxIndex = -1;
+            let bestSender = '';
+
+            for (const [sender, queue] of senderQueues.entries()) {
+                if (queue.length > 0) {
+                    const candidate = queue[0];
+                    if (!bestTx || candidate.fee > bestTx.fee) {
+                        bestTx = candidate;
+                        bestSender = sender;
+                    }
+                }
+            }
+
+            if (!bestTx) break; // No more mineable transactions
+
+            selectedTransactions.push(bestTx);
+            senderQueues.get(bestSender)!.shift(); // Remove from queue
+            if (senderQueues.get(bestSender)!.length === 0) {
+                senderQueues.delete(bestSender);
+            }
+        }
+
+        return selectedTransactions;
     }
 
     /**

@@ -193,8 +193,10 @@ export class Blockchain {
       }
     }
 
-    if (!ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, tempLedger, tempNonces)) {
-      throw new Error(`Invalid block received: Block #${hydratedBlock.index} failed validation.`);
+    try {
+      ChainValidator.validateBlock(hydratedBlock, latestBlock, expectedReward, this.difficulty, tempLedger, tempNonces);
+    } catch (error: any) {
+      throw new Error(`Block #${hydratedBlock.index} failed validation: ${error.message}`);
     }
 
     // 3. Add to chain and update master ledger only if validation passed
