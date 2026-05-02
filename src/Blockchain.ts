@@ -20,6 +20,7 @@ export class Blockchain {
   private accountNonces: Map<string, number> = new Map();
   private MAX_MEMPOOL_SIZE = 5000;
   private saveQueue: Promise<void> = Promise.resolve();
+  private lastSavedIndex: number = -1; // Tracks the highest block index persisted to disk
 
   constructor() {
     // When we initialize a new blockchain, we automatically create the Genesis Block.
@@ -53,18 +54,21 @@ export class Blockchain {
       try {
         const batch = this.db!.batch();
 
-        // Save metadata
+        // 1. Metadata and Mempool
         batch.put('meta:latestIndex', (this.chain.length - 1).toString());
         batch.put('meta:miningReward', this.miningReward.toString());
-
-        // Save mempool
         batch.put('mempool', this.pendingTransactions);
 
-        // Save latest block
-        const latestBlock = this.getLatestBlock();
-        batch.put(`block:${latestBlock.index}`, latestBlock);
+        // 2. Delta Persistence: Only save blocks that haven't been persisted yet.
+        // This handles both single-block appends and large P2P syncs efficiently.
+        for (let i = this.lastSavedIndex + 1; i < this.chain.length; i++) {
+          batch.put(`block:${i}`, this.chain[i]);
+        }
 
         await batch.write();
+        
+        // Only update the lastSavedIndex after a successful write
+        this.lastSavedIndex = this.chain.length - 1;
       } catch (err) {
         Logger.error('Failed to save blockchain to LevelDB:', err);
       }
@@ -78,6 +82,7 @@ export class Blockchain {
     try {
       const latestIndexStr = await this.db.get('meta:latestIndex');
       const latestIndex = parseInt(latestIndexStr);
+      this.lastSavedIndex = latestIndex;
       
       const chain: Block[] = [];
       for (let i = 0; i <= latestIndex; i++) {
@@ -132,6 +137,7 @@ export class Blockchain {
     this.ledger.clear();
     this.knownSignatures.clear();
     this.accountNonces.clear();
+    this.lastSavedIndex = -1; // Reset persistence tracker
     await this.saveToDisk();
     Logger.log('Blockchain reset to genesis state.');
   }
@@ -417,6 +423,7 @@ export class Blockchain {
       }
     }
 
+    this.lastSavedIndex = -1; // Force a full chain rewrite to handle potential reorgs
     await this.saveToDisk();
     return true;
   }
