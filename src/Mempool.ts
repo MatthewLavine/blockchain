@@ -22,13 +22,6 @@ export class Mempool {
     }
 
     /**
-     * Clears all transactions from the pool
-     */
-    public clear(): void {
-        this.transactions = [];
-    }
-
-    /**
      * Returns all transactions currently in the pool
      */
     public getTransactions(): Transaction[] {
@@ -40,6 +33,13 @@ export class Mempool {
      */
     public setTransactions(transactions: Transaction[]): void {
         this.transactions = transactions;
+    }
+
+    /**
+     * Clears all transactions from the pool
+     */
+    public clear(): void {
+        this.transactions = [];
     }
 
     /**

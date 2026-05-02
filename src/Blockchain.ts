@@ -93,6 +93,22 @@ export class Blockchain {
   }
 
   /**
+   * Resets the entire blockchain to its initial state (genesis only).
+   * WARNING: This wipes all transaction history and balances.
+   */
+  public reset(): void {
+    this.chain = [this.createGenesisBlock()];
+    this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
+    this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
+    this.mempool.clear();
+    this.ledger.clear();
+    this.knownSignatures.clear();
+    this.accountNonces.clear();
+    this.saveToDisk();
+    Logger.log('Blockchain reset to genesis state.');
+  }
+
+  /**
    * The first block of a blockchain is special. It doesn't have a previous block to link to.
    * This is called the "Genesis Block". We have to create it manually.
    */
@@ -111,23 +127,6 @@ export class Blockchain {
   public getLatestBlock(): Block {
     return this.chain[this.chain.length - 1];
   }
-
-  /**
-   * Resets the entire blockchain to its initial state (genesis only).
-   * WARNING: This wipes all transaction history and balances.
-   */
-  public reset(): void {
-    this.chain = [this.createGenesisBlock()];
-    this.difficulty = NETWORK_CONSTANTS.INITIAL_DIFFICULTY;
-    this.miningReward = NETWORK_CONSTANTS.INITIAL_MINING_REWARD;
-    this.mempool.clear();
-    this.ledger.clear();
-    this.knownSignatures.clear();
-    this.accountNonces.clear();
-    this.saveToDisk();
-    Logger.log('Blockchain reset to genesis state.');
-  }
-
 
   /**
    * Takes all pending transactions, puts them in a Block, and mines it.

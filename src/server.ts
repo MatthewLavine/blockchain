@@ -250,7 +250,6 @@ const server = app.listen(port, () => {
   }
 });
 
-
 /**
  * Handle graceful shutdown
  */
