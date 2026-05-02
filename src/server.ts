@@ -68,7 +68,10 @@ app.get('/', (req, res) => {
 
 // Initialize our blockchain
 let myCoin = new Blockchain();
-myCoin.setStoragePath(port); // Enable disk persistence
+const startBlockchain = async () => {
+  await myCoin.setStoragePath(port); // Enable disk persistence
+};
+startBlockchain();
 const p2pServer = new P2PServer(myCoin);
 
 /**
@@ -127,9 +130,9 @@ app.get('/pending', (req, res) => {
  * NOTE: This is intentionally unauthenticated and broadcasts to all peers to facilitate 
  * rapid testing in development.
  */
-app.post('/reset', resetLimiter, (req, res) => {
+app.post('/reset', resetLimiter, async (req, res) => {
   if (process.env.ALLOW_REMOTE_RESET === 'true') {
-    myCoin.reset();
+    await myCoin.reset();
     p2pServer.broadcastReset();
     res.json({ message: 'Blockchain has been reset to genesis state.' });
   } else {
@@ -176,7 +179,7 @@ app.post('/addPeer', (req, res) => {
  * Accepts a new signed transaction and adds it to the pending pool
  * Expects JSON body: { fromAddress, toAddress, amount, signature }
  */
-app.post('/transaction', transactionLimiter, (req, res) => {
+app.post('/transaction', transactionLimiter, async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ error: 'Missing request body' });
@@ -191,7 +194,7 @@ app.post('/transaction', transactionLimiter, (req, res) => {
     const tx = Transaction.fromObject(req.body);
 
     // The createTransaction method internally checks tx.isValid()
-    myCoin.createTransaction(tx);
+    await myCoin.createTransaction(tx);
     p2pServer.broadcastTransaction(tx);
 
     res.json({ message: 'Transaction successfully added to pending pool!' });
@@ -204,7 +207,7 @@ app.post('/transaction', transactionLimiter, (req, res) => {
  * Triggers the mining process to process all pending transactions
  * Expects JSON body: { rewardAddress }
  */
-app.post('/mine', miningLimiter, (req, res) => {
+app.post('/mine', miningLimiter, async (req, res) => {
   const rewardAddress = req.body?.rewardAddress;
 
   if (!rewardAddress) {
@@ -212,7 +215,7 @@ app.post('/mine', miningLimiter, (req, res) => {
   }
 
   try {
-    myCoin.minePendingTransactions(rewardAddress);
+    await myCoin.minePendingTransactions(rewardAddress);
     p2pServer.broadcastLatest();
     res.json({
       message: 'Block successfully mined!',
@@ -256,11 +259,11 @@ const server = app.listen(port, () => {
 const shutdown = (signal: string) => {
   Logger.log(`Received ${signal}. Starting graceful shutdown...`);
 
-  server.close(() => {
+  server.close(async () => {
     Logger.log('HTTP server closed.');
 
     p2pServer.close();
-    myCoin.shutdown();
+    await myCoin.shutdown();
 
     Logger.log('Shutdown complete. Goodbye!');
     process.exit(0);

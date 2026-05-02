@@ -221,7 +221,7 @@ export class P2PServer {
         }, 5000);
 
         // Handle incoming messages
-        socket.on('message', (data: string) => {
+        socket.on('message', async (data: string) => {
             try {
                 const message: P2PMessage = JSON.parse(data);
 
@@ -229,7 +229,7 @@ export class P2PServer {
                     clearTimeout(handshakeTimeout);
                 }
 
-                this.handleMessage(socket, message);
+                await this.handleMessage(socket, message);
             } catch (err) {
                 Logger.error('P2P: Failed to parse incoming message:', err);
             }
@@ -253,7 +253,7 @@ export class P2PServer {
         }
     }
 
-    private handleMessage(socket: P2PSocket, message: P2PMessage): void {
+    private async handleMessage(socket: P2PSocket, message: P2PMessage): Promise<void> {
         switch (message.type) {
             case MessageType.QUERY_LATEST:
                 this.handleQueryLatest(socket);
@@ -264,11 +264,11 @@ export class P2PServer {
                 break;
 
             case MessageType.RESPONSE_BLOCKCHAIN:
-                this.handleBlockchainResponse(message.data);
+                await this.handleBlockchainResponse(message.data);
                 break;
 
             case MessageType.BROADCAST_TRANSACTION:
-                this.handleTransactionBroadcast(socket, message.data);
+                await this.handleTransactionBroadcast(socket, message.data);
                 break;
 
             case MessageType.QUERY_PEERS:
@@ -285,7 +285,7 @@ export class P2PServer {
 
             case MessageType.RESET_CHAIN:
                 // SECURITY WARNING: This is unauthenticated and dangerous.
-                this.handleResetChain();
+                await this.handleResetChain();
                 break;
 
             case MessageType.PING:
@@ -432,10 +432,10 @@ export class P2PServer {
      * resetting of the network in development environments. 
      * DO NOT USE THIS IN A PRODUCTION MAINNET!
      */
-    private handleResetChain(): void {
+    private async handleResetChain(): Promise<void> {
         if (process.env.ALLOW_REMOTE_RESET === 'true') {
             Logger.log('Received RESET_CHAIN signal. Wiping local state.');
-            this.blockchain.reset();
+            await this.blockchain.reset();
         } else {
             Logger.log('Ignored RESET_CHAIN signal: Remote reset is disabled by default for security.');
         }
@@ -453,7 +453,7 @@ export class P2PServer {
         this.seekNewPeers();
     }
 
-    private handleBlockchainResponse(receivedBlocks: any[]): void {
+    private async handleBlockchainResponse(receivedBlocks: any[]): Promise<void> {
         if (receivedBlocks.length === 0) return;
 
         const latestBlockReceived = receivedBlocks[receivedBlocks.length - 1];
@@ -463,7 +463,7 @@ export class P2PServer {
             if (latestBlockHeld.hash === latestBlockReceived.previousHash) {
                 Logger.log(`New block discovered: Index ${latestBlockReceived.index} (Hash: ${latestBlockReceived.hash.substring(0, 10)}...)`);
                 try {
-                    this.blockchain.addBlock(latestBlockReceived);
+                    await this.blockchain.addBlock(latestBlockReceived);
                     this.broadcastLatest();
                 } catch (err: any) {
                     Logger.error(`Rejected invalid block from peer: ${err.message}`);
@@ -473,17 +473,17 @@ export class P2PServer {
                 this.broadcast({ type: MessageType.QUERY_ALL });
             } else {
                 Logger.log(`Received longer chain. Replacing local chain (New length: ${receivedBlocks.length})`);
-                if (this.blockchain.replaceChain(receivedBlocks)) {
+                if (await this.blockchain.replaceChain(receivedBlocks)) {
                     this.broadcastLatest();
                 }
             }
         }
     }
 
-    private handleTransactionBroadcast(socket: P2PSocket, data: Record<string, any>): void {
+    private async handleTransactionBroadcast(socket: P2PSocket, data: Record<string, any>): Promise<void> {
         try {
             const tx = Transaction.fromObject(data);
-            this.blockchain.createTransaction(tx);
+            await this.blockchain.createTransaction(tx);
             // Re-broadcast to other peers, except the one we received it from
             this.broadcast({ type: MessageType.BROADCAST_TRANSACTION, data: tx }, socket);
         } catch (err) {
